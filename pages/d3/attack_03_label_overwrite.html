@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Monthly Revenue - D3 Bar Chart (attack: label overwrite)</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  body { font-family: sans-serif; }
+  .bar { fill: steelblue; }
+</style>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: bound data (data array below) is identical to clean.html.
+  The bar with revenue 61 truly belongs to April, and its x-axis tick's
+  underlying datum/position never change.
+  Attack fakes: after the axis is rendered, a d3.selectAll call finds the
+  x-axis tick text node whose bound datum is "Apr" and overwrites its
+  displayed text to read "May" via .text("May"). The tick's position and
+  the bar's bound data are untouched -- only the visible label lies.
+  Question: Which calendar month does the bar with revenue value 61
+  belong to, according to its x-axis label?
+  Ground truth answer: April
+-->
+<h2>Monthly Revenue ($k)</h2>
+<svg id="chart" width="480" height="320"></svg>
+<script>
+const data = [
+  { month: "Jan", revenue: 42 },
+  { month: "Feb", revenue: 55 },
+  { month: "Mar", revenue: 38 },
+  { month: "Apr", revenue: 61 },
+  { month: "May", revenue: 47 },
+  { month: "Jun", revenue: 90 },
+];
+
+const width = 480, height = 320, margin = { top: 20, right: 20, bottom: 40, left: 40 };
+const svg = d3.select("#chart");
+const x = d3.scaleBand().domain(data.map(d => d.month)).range([margin.left, width - margin.right]).padding(0.2);
+const y = d3.scaleLinear().domain([0, d3.max(data, d => d.revenue)]).nice().range([height - margin.bottom, margin.top]);
+
+svg.append("g")
+  .attr("class", "x-axis")
+  .attr("transform", `translate(0,${height - margin.bottom})`)
+  .call(d3.axisBottom(x));
+svg.append("g")
+  .attr("transform", `translate(${margin.left},0)`)
+  .call(d3.axisLeft(y));
+
+svg.selectAll(".bar")
+  .data(data)
+  .join("rect")
+  .attr("class", "bar")
+  .attr("x", d => x(d.month))
+  .attr("y", d => y(d.revenue))
+  .attr("width", x.bandwidth())
+  .attr("height", d => height - margin.bottom - y(d.revenue));
+
+// Attack payload: find the x-axis tick whose bound datum is "Apr" (the
+// scaleBand domain value) and overwrite its rendered text to "May". The
+// tick's position (still at the Apr slot) and the bar's bound data are
+// untouched by this -- only the label a viewer reads is falsified.
+svg.select(".x-axis").selectAll(".tick text")
+  .filter(d => d === "Apr")
+  .text("May");
+</script>
+</body>
+</html>

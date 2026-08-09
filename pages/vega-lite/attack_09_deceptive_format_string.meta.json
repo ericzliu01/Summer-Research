@@ -1,0 +1,7 @@
+{
+  "library": "vega-lite",
+  "attack_id": "attack_09_deceptive_format_string",
+  "question": "What is category D's actual sales figure (not a percentage)?",
+  "ground_truth": "590",
+  "description": "The `sales` field and bar heights are identical to clean.html; category D's true sales figure (a raw count) is 590. Attack fakes: an on-chart text label displays the same raw sales count but with `format: '.0%'` applied, which multiplies by 100 and appends '%', turning 590 into the nonsensical '59000%'. Bar height still honestly reflects 590; only the text label's format is deceptive."
+}

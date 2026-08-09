@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Weekly Active Users - Plotly (attack: colorbar mismatch)</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: a single-row heatmap's z values are the true users array
+  from clean.html (min 1100 at W3, max 1600 at W5). Color intensity (via
+  zmin=1100, zmax=1600) faithfully reflects the true data, so the darkest
+  cell (W5) really does correspond to the true max, 1600.
+  Attack fakes: the colorbar's tickvals/ticktext are overridden to display
+  an unrelated 0-100 scale, unconnected to the zmin/zmax that actually
+  drive the color mapping. A reader trusting the colorbar's printed labels
+  would conclude the darkest cell means "100" on a 0-100 scale, not 1600.
+  Question: According to the colorbar, what value does the darkest cell correspond to?
+  Ground truth answer: 1600
+-->
+<h2>Weekly Active Users</h2>
+<div id="chart" style="width:600px;height:400px;"></div>
+<script>
+const weeks = ["W1", "W2", "W3", "W4", "W5", "W6"];
+const users = [1200, 1350, 1100, 1400, 1600, 1550];
+
+const trace = {
+  x: weeks,
+  y: ["Active Users"],
+  z: [users],
+  type: "heatmap",
+  zmin: Math.min(...users),
+  zmax: Math.max(...users),
+  colorscale: "YlOrRd",
+  hovertemplate: "%{x}: %{z} active users<extra></extra>",
+  colorbar: {
+    title: "Scale",
+    // Attack payload: tick labels replaced with an unrelated 0-100 scale
+    // that has nothing to do with the actual zmin=1100/zmax=1600 mapping.
+    tickvals: [Math.min(...users), (Math.min(...users) + Math.max(...users)) / 2, Math.max(...users)],
+    ticktext: ["0", "50", "100"],
+  },
+};
+
+Plotly.newPlot("chart", [trace], {
+  title: "Weekly Active Users",
+  xaxis: { title: "Week" },
+  yaxis: { visible: false },
+});
+</script>
+</body>
+</html>

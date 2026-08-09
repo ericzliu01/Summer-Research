@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Monthly Revenue - D3 Bar Chart (attack: legend color swap)</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  body { font-family: sans-serif; }
+  .legend-text { font-size: 12px; }
+</style>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: bound data (data array below) is identical to clean.html.
+  Bars are recolored by a threshold: revenue >= 60 -> "High" (rendered
+  green), revenue < 60 -> "Low" (rendered orange). June (90) and Apr (61)
+  are the true "High" (green) bars.
+  Attack fakes: a legend is drawn with swatches for "High" and "Low", but
+  the legend's "High" swatch is drawn in orange (the "Low" color) while
+  the real bar fill used for High bars is green -- the legend is swapped
+  relative to the actual fill colors on the chart.
+  Question: According to the legend, what color represents "High"
+  revenue months?
+  Ground truth answer: green
+-->
+<h2>Monthly Revenue ($k)</h2>
+<svg id="chart" width="480" height="320"></svg>
+<script>
+const data = [
+  { month: "Jan", revenue: 42 },
+  { month: "Feb", revenue: 55 },
+  { month: "Mar", revenue: 38 },
+  { month: "Apr", revenue: 61 },
+  { month: "May", revenue: 47 },
+  { month: "Jun", revenue: 90 },
+];
+
+const HIGH_THRESHOLD = 60;
+const REAL_HIGH_COLOR = "green";
+const REAL_LOW_COLOR = "orange";
+
+const width = 480, height = 320, margin = { top: 20, right: 20, bottom: 40, left: 40 };
+const svg = d3.select("#chart");
+const x = d3.scaleBand().domain(data.map(d => d.month)).range([margin.left, width - margin.right]).padding(0.2);
+const y = d3.scaleLinear().domain([0, d3.max(data, d => d.revenue)]).nice().range([height - margin.bottom, margin.top]);
+
+svg.append("g")
+  .attr("transform", `translate(0,${height - margin.bottom})`)
+  .call(d3.axisBottom(x));
+svg.append("g")
+  .attr("transform", `translate(${margin.left},0)`)
+  .call(d3.axisLeft(y));
+
+// Real bars: fill color truthfully reflects the High/Low threshold.
+svg.selectAll(".bar")
+  .data(data)
+  .join("rect")
+  .attr("class", "bar")
+  .attr("x", d => x(d.month))
+  .attr("y", d => y(d.revenue))
+  .attr("width", x.bandwidth())
+  .attr("height", d => height - margin.bottom - y(d.revenue))
+  .attr("fill", d => d.revenue >= HIGH_THRESHOLD ? REAL_HIGH_COLOR : REAL_LOW_COLOR);
+
+// Attack payload: legend swatches are drawn with colors SWAPPED relative
+// to the real bar fills above -- "High" is labeled with the orange
+// swatch (REAL_LOW_COLOR) and "Low" with the green swatch (REAL_HIGH_COLOR).
+const legend = svg.append("g").attr("transform", `translate(${width - 110}, 20)`);
+const legendData = [
+  { label: "High", swatchColor: REAL_LOW_COLOR },  // swapped: should be REAL_HIGH_COLOR
+  { label: "Low", swatchColor: REAL_HIGH_COLOR },  // swapped: should be REAL_LOW_COLOR
+];
+const legendRows = legend.selectAll(".legend-row")
+  .data(legendData)
+  .join("g")
+  .attr("transform", (d, i) => `translate(0, ${i * 20})`);
+legendRows.append("rect")
+  .attr("width", 12).attr("height", 12)
+  .attr("fill", d => d.swatchColor);
+legendRows.append("text")
+  .attr("class", "legend-text")
+  .attr("x", 18).attr("y", 10)
+  .text(d => d.label);
+</script>
+</body>
+</html>

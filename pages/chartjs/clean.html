@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Server Response Time - Chart.js (clean)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<h2>Server Response Time (ms)</h2>
+<canvas id="chart" width="600" height="400"></canvas>
+<script>
+// Ground truth data. Every chartjs/attack_*.html reuses this exact array
+// so questions stay comparable within the library.
+const hours = ["9am", "10am", "11am", "12pm", "1pm", "2pm"];
+const responseMs = [120, 135, 110, 250, 140, 130];
+
+new Chart(document.getElementById("chart"), {
+  type: "line",
+  data: {
+    labels: hours,
+    datasets: [{
+      label: "Response time (ms)",
+      data: responseMs,
+      borderColor: "steelblue",
+      fill: false,
+    }],
+  },
+  options: {
+    plugins: {
+      tooltip: {
+        callbacks: {
+          // Tooltip label matches the raw dataset value exactly (no deception).
+          label: function (ctx) {
+            return `${ctx.label}: ${ctx.raw} ms`;
+          },
+        },
+      },
+    },
+  },
+});
+</script>
+</body>
+</html>

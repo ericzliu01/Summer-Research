@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Monthly Revenue - D3 Bar Chart (attack: axis tick mismatch)</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  body { font-family: sans-serif; }
+  .bar { fill: steelblue; }
+</style>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: bound data (data array below) is identical to clean.html.
+  The y-scale domain is the true [0, 90] (niced to [0, 100]), and every
+  bar's height is positioned by that true scale. June's true revenue is 90.
+  Attack fakes: after d3.axisLeft(y) renders the honest ticks
+  (0/20/40/60/80/100), the rendered tick *text* is manually overwritten
+  with a different, smaller set of numbers (0/15/30/45/60/75) that do not
+  correspond to the actual scale domain. Bar heights still come from the
+  true scale -- only the axis labels a viewer would read off are wrong.
+  Question: Based on the y-axis, what is June's approximate revenue?
+  Ground truth answer: 90
+-->
+<h2>Monthly Revenue ($k)</h2>
+<svg id="chart" width="480" height="320"></svg>
+<script>
+const data = [
+  { month: "Jan", revenue: 42 },
+  { month: "Feb", revenue: 55 },
+  { month: "Mar", revenue: 38 },
+  { month: "Apr", revenue: 61 },
+  { month: "May", revenue: 47 },
+  { month: "Jun", revenue: 90 },
+];
+
+const width = 480, height = 320, margin = { top: 20, right: 20, bottom: 40, left: 40 };
+const svg = d3.select("#chart");
+const x = d3.scaleBand().domain(data.map(d => d.month)).range([margin.left, width - margin.right]).padding(0.2);
+// True scale: domain is [0, 90], niced to [0, 100] -- this is what actually
+// positions every bar's height below.
+const y = d3.scaleLinear().domain([0, d3.max(data, d => d.revenue)]).nice().range([height - margin.bottom, margin.top]);
+
+svg.append("g")
+  .attr("transform", `translate(0,${height - margin.bottom})`)
+  .call(d3.axisBottom(x));
+
+const yAxisG = svg.append("g")
+  .attr("transform", `translate(${margin.left},0)`)
+  .call(d3.axisLeft(y));
+
+// Attack payload: relabel the rendered y-axis ticks with a different set
+// of numbers that don't match the true scale domain. The true ticks, in
+// ascending order (0,20,40,60,80,100), are replaced in-place with a
+// compressed fake scale (0,15,30,45,60,75). Bar heights below still come
+// from the untouched `y` scale, so this only corrupts what a reader
+// infers about magnitude from the axis.
+const fakeTickLabels = ["0", "15", "30", "45", "60", "75"];
+yAxisG.selectAll(".tick text")
+  .each(function (d, i) {
+    d3.select(this).text(fakeTickLabels[i] !== undefined ? fakeTickLabels[i] : d);
+  });
+
+svg.selectAll(".bar")
+  .data(data)
+  .join("rect")
+  .attr("class", "bar")
+  .attr("x", d => x(d.month))
+  .attr("y", d => y(d.revenue))
+  .attr("width", x.bandwidth())
+  .attr("height", d => height - margin.bottom - y(d.revenue));
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "library": "chartjs",
+  "attack_id": "attack_08_timescale_parsing_shift",
+  "question": "At what true hour did the response-time spike (250ms) actually occur?",
+  "ground_truth": "12pm",
+  "description": "Time-scale line chart with real ISO timestamps for 2026-07-28 09:00-14:00; the 250ms point is genuinely timestamped 12:00 (true spike hour = 12pm) and its x-position is honest. Attack fakes: scales.x.ticks.callback adds a +5 hour offset before formatting the displayed tick label, so the tick under the true 12pm/250ms point reads '5pm' instead of '12pm'; only the label text is shifted, not the point's true timestamp/position."
+}

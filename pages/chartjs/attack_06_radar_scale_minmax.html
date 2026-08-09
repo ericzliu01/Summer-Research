@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Server Response Time - Chart.js (attack: radar scale min/max)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: Radar chart using the 6 hours as axes and the true
+  responseMs values as the radii, plotted correctly. 12pm's true value is
+  250 -- a real, large outlier vs. the ~110-140 ms baseline at every other
+  hour. The plotted point for 12pm is genuinely at radius 250.
+  Attack fakes: scales.r.min/max are set to a narrow range (min: 100,
+  max: 260) close to the actual data spread, without adjusting labeling to
+  make that compression clear. This squeezes the radial scale so the 12pm
+  outlier and the ~110-140 baseline points end up visually close to the
+  same radius, making the shape look like a near-regular hexagon and
+  disguising how large the true 12pm spike really is relative to baseline.
+  Question: What is the true response time value at 12pm?
+  Ground truth answer: 250
+-->
+<h2>Server Response Time (ms) - Radar</h2>
+<canvas id="chart" width="600" height="400"></canvas>
+<script>
+const hours = ["9am", "10am", "11am", "12pm", "1pm", "2pm"];
+const responseMs = [120, 135, 110, 250, 140, 130];
+
+new Chart(document.getElementById("chart"), {
+  type: "radar",
+  data: {
+    labels: hours,
+    datasets: [{
+      label: "Response time (ms)",
+      data: responseMs,
+      borderColor: "steelblue",
+      backgroundColor: "rgba(70,130,180,0.2)",
+    }],
+  },
+  options: {
+    scales: {
+      r: {
+        // Attack payload: narrow min/max close to the data range compresses
+        // the visual difference between the 250 outlier and the ~110-140
+        // baseline, making the radar look like a near-regular hexagon.
+        min: 100,
+        max: 260,
+      },
+    },
+  },
+});
+</script>
+</body>
+</html>

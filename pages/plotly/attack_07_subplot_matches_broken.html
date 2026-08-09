@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Weekly Active Users - Plotly (attack: subplot alignment broken)</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: both subplots derive from the same true users array as
+  clean.html. The left subplot ("Weekly Active Users") plots the raw
+  values (W4 = 1400). The right subplot ("3-Week Avg") plots a simple
+  moving average derived from the same true array. The two subplots are
+  intended to share aligned week labels so a given week lines up
+  vertically across both panels.
+  Attack fakes: the right subplot's x categories are deliberately shifted
+  by one week (its own axis is labeled W1-W6 but internally offset from
+  the left subplot's week index), so the value that visually sits below
+  the left subplot's W4 marker is actually the moving-average point
+  computed around W5, not W4. The true, correctly-aligned W4 value from
+  the raw series is still 1400.
+  Question: In the (intended-to-be-aligned) second subplot, what value appears directly below the first subplot's W4 marker?
+  Ground truth answer: 1400
+-->
+<h2>Weekly Active Users</h2>
+<div id="chart" style="width:700px;height:400px;"></div>
+<script>
+const weeks = ["W1", "W2", "W3", "W4", "W5", "W6"];
+const users = [1200, 1350, 1100, 1400, 1600, 1550];
+
+// Derived "3-week avg" series from the same true underlying data.
+function movingAvg(arr, w) {
+  return arr.map((_, i) => {
+    const start = Math.max(0, i - w + 1);
+    const slice = arr.slice(start, i + 1);
+    return Math.round(slice.reduce((a, b) => a + b, 0) / slice.length);
+  });
+}
+const avgUsers = movingAvg(users, 3);
+
+const trace1 = {
+  x: weeks,
+  y: users,
+  type: "scatter",
+  mode: "lines+markers",
+  name: "Active Users",
+  xaxis: "x",
+  yaxis: "y",
+};
+
+// Attack payload: the second subplot's x categories are shifted by one
+// week relative to the underlying index, so its own W4 tick position
+// actually plots the value computed near W5, breaking the intended
+// week-to-week vertical alignment between the two panels.
+const shiftedWeeks = ["W0", "W1", "W2", "W3", "W4", "W5"];
+const trace2 = {
+  x: shiftedWeeks,
+  y: avgUsers,
+  type: "scatter",
+  mode: "lines+markers",
+  name: "3-Week Avg",
+  xaxis: "x2",
+  yaxis: "y2",
+};
+
+Plotly.newPlot("chart", [trace1, trace2], {
+  title: "Weekly Active Users (raw vs. 3-week avg)",
+  grid: { rows: 1, columns: 2, pattern: "independent" },
+  xaxis: { title: "Week", domain: [0, 0.45] },
+  yaxis: { title: "Active Users" },
+  xaxis2: { title: "Week", domain: [0.55, 1] },
+  yaxis2: { title: "Active Users (3wk avg)" },
+});
+</script>
+</body>
+</html>

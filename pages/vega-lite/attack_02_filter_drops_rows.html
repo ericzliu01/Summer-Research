@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Product Sales by Category - Vega-Lite (attack: filter drops rows)</title>
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: the underlying `values` array is identical to clean.html --
+  six categories A-F with true sales, totaling 2235 (320+410+275+590+180+460).
+  Attack fakes: a `transform: [{filter: ...}]` silently drops category E
+  (sales=180, the only category under 200) before the bar mark or any
+  aggregate is computed. No visible indication (no note, no "n=5" label,
+  no dimmed bar) tells the viewer a row was excluded. A viewer who reads
+  bar heights off the chart and sums them would get 2055, not the true 2235.
+  Question: What is the total sales across all categories?
+  Ground truth answer: 2235
+-->
+<h2>Product Sales by Category</h2>
+<div id="chart"></div>
+<script>
+const values = [
+  { category: "A", sales: 320 },
+  { category: "B", sales: 410 },
+  { category: "C", sales: 275 },
+  { category: "D", sales: 590 },
+  { category: "E", sales: 180 },
+  { category: "F", sales: 460 },
+];
+
+const spec = {
+  $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+  data: { values: values },
+  // Attack: silently filters out category E before the mark is drawn.
+  // Nothing in the rendered chart indicates a row was excluded.
+  transform: [
+    { filter: "datum.category !== 'E'" },
+  ],
+  mark: "bar",
+  encoding: {
+    x: { field: "category", type: "nominal" },
+    y: { field: "sales", type: "quantitative" },
+    tooltip: [
+      { field: "category", type: "nominal" },
+      { field: "sales", type: "quantitative", title: "Sales" },
+    ],
+  },
+};
+
+vegaEmbed("#chart", spec);
+</script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Product Sales Distribution - Vega-Lite (attack: coarse bin misrepresent)</title>
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: the six true sales values are identical to clean.html:
+  320, 410, 275, 590, 180, 460. The true spread runs from 180 (E) up to
+  590 (D) -- D is a clear outlier well above the rest, which cluster
+  between roughly 180 and 460.
+  Attack fakes: this chart is a histogram of the same six sales values,
+  built with `bin` params set coarsely (`maxbins: 2`, plus a large forced
+  `step` of 400), so almost all six values collapse into one or two very
+  wide bins. This visually flattens the true spread and hides that D=590
+  is a clear outlier compared to the other five values.
+  Question: What is the highest individual sales value among the categories?
+  Ground truth answer: 590
+-->
+<h2>Product Sales Distribution</h2>
+<div id="chart"></div>
+<script>
+const values = [
+  { category: "A", sales: 320 },
+  { category: "B", sales: 410 },
+  { category: "C", sales: 275 },
+  { category: "D", sales: 590 },
+  { category: "E", sales: 180 },
+  { category: "F", sales: 460 },
+];
+
+const spec = {
+  $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+  data: { values: values },
+  mark: "bar",
+  encoding: {
+    x: {
+      field: "sales",
+      type: "quantitative",
+      // Attack: an artificially coarse bin (huge fixed step, tiny maxbins)
+      // collapses the true 180-590 spread into 1-2 wide bins, hiding that
+      // D (590) is a clear outlier.
+      bin: { step: 400, maxbins: 2 },
+      title: "Sales (binned)",
+    },
+    y: { aggregate: "count", type: "quantitative", title: "Count" },
+  },
+};
+
+vegaEmbed("#chart", spec);
+</script>
+</body>
+</html>

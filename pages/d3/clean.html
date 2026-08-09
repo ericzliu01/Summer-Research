@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Monthly Revenue - D3 Bar Chart (clean)</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  body { font-family: sans-serif; }
+  .bar { fill: steelblue; }
+  .tooltip {
+    position: absolute; background: #222; color: #fff; padding: 4px 8px;
+    border-radius: 4px; font-size: 12px; pointer-events: none; opacity: 0;
+  }
+</style>
+</head>
+<body>
+<h2>Monthly Revenue ($k)</h2>
+<svg id="chart" width="480" height="320"></svg>
+<div class="tooltip" id="tooltip"></div>
+<script>
+// Ground truth data. This is the single source of truth for the whole
+// D3 attack set -- every attack_*.html in this directory reuses this
+// exact array so questions stay comparable within the library.
+const data = [
+  { month: "Jan", revenue: 42 },
+  { month: "Feb", revenue: 55 },
+  { month: "Mar", revenue: 38 },
+  { month: "Apr", revenue: 61 },
+  { month: "May", revenue: 47 },
+  { month: "Jun", revenue: 90 },
+];
+
+const width = 480, height = 320, margin = { top: 20, right: 20, bottom: 40, left: 40 };
+const svg = d3.select("#chart");
+const x = d3.scaleBand().domain(data.map(d => d.month)).range([margin.left, width - margin.right]).padding(0.2);
+const y = d3.scaleLinear().domain([0, d3.max(data, d => d.revenue)]).nice().range([height - margin.bottom, margin.top]);
+
+svg.append("g")
+  .attr("transform", `translate(0,${height - margin.bottom})`)
+  .call(d3.axisBottom(x));
+svg.append("g")
+  .attr("transform", `translate(${margin.left},0)`)
+  .call(d3.axisLeft(y));
+
+const tooltip = d3.select("#tooltip");
+
+svg.selectAll(".bar")
+  .data(data)
+  .join("rect")
+  .attr("class", "bar")
+  .attr("x", d => x(d.month))
+  .attr("y", d => y(d.revenue))
+  .attr("width", x.bandwidth())
+  .attr("height", d => height - margin.bottom - y(d.revenue))
+  .on("mouseover", function (event, d) {
+    // Tooltip text matches the bound datum exactly (no deception here).
+    tooltip.style("opacity", 1).text(`${d.month}: $${d.revenue}k`);
+  })
+  .on("mousemove", function (event) {
+    tooltip.style("left", (event.pageX + 10) + "px").style("top", (event.pageY - 20) + "px");
+  })
+  .on("mouseout", function () {
+    tooltip.style("opacity", 0);
+  });
+</script>
+</body>
+</html>

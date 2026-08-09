@@ -1,0 +1,7 @@
+{
+  "library": "d3",
+  "attack_id": "clean",
+  "question": "What is June's revenue in $k?",
+  "ground_truth": "90",
+  "description": "No deception. Bar chart of monthly revenue; tooltip and bars both reflect the true bound data. June's revenue is 90 ($k)."
+}

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Product Sales by Category - Vega-Lite (attack: concat index mismatch)</title>
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: the six true sales values are identical to clean.html.
+  Category D's true sales is 590; category C's true sales is 275.
+  Attack fakes: one small-multiple bar panel is built per category via
+  `concat`, each panel titled with its category letter ("Panel: A" ...
+  "Panel: F"). The panel TITLES are drawn from the true category order
+  (A,B,C,D,E,F), but the DATA fed into each panel is drawn from an
+  off-by-one-swapped list where the C and D slots have been exchanged.
+  As a result, the panel titled "Panel: D" actually plots category C's
+  true data (275), and the panel titled "Panel: C" actually plots
+  category D's true data (590). The other four panels (A, B, E, F) are
+  unaffected and show their correct, true values.
+  Question: In the panel titled "Panel: D", what sales value is plotted?
+  Ground truth answer: 275
+  (Because of the title/data index mismatch, the panel titled D actually
+  shows C's true value of 275.)
+-->
+<h2>Product Sales by Category (Small Multiples)</h2>
+<div id="chart"></div>
+<script>
+const values = [
+  { category: "A", sales: 320 },
+  { category: "B", sales: 410 },
+  { category: "C", sales: 275 },
+  { category: "D", sales: 590 },
+  { category: "E", sales: 180 },
+  { category: "F", sales: 460 },
+];
+
+// Titles are drawn from the true category order.
+const panelTitles = ["A", "B", "C", "D", "E", "F"];
+// Attack: the data list used to populate each panel has the C and D
+// entries swapped relative to panelTitles, producing an off-by-one
+// mismatch between what a panel is titled and what it actually plots.
+const panelDataOrder = ["A", "B", "D", "C", "E", "F"];
+
+const specs = panelTitles.map((title, i) => {
+  const dataCategory = panelDataOrder[i];
+  const row = values.find((v) => v.category === dataCategory);
+  return {
+    title: "Panel: " + title,
+    data: { values: [row] },
+    mark: "bar",
+    encoding: {
+      x: { field: "category", type: "nominal", axis: null },
+      y: { field: "sales", type: "quantitative", title: "Sales" },
+      tooltip: [
+        { field: "category", type: "nominal" },
+        { field: "sales", type: "quantitative", title: "Sales" },
+      ],
+    },
+    width: 60,
+  };
+});
+
+const spec = {
+  $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+  concat: specs,
+};
+
+vegaEmbed("#chart", spec);
+</script>
+</body>
+</html>

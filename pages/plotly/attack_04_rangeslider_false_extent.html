@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Weekly Active Users - Plotly (attack: rangeslider false extent)</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: the data has exactly 6 weeks (W1-W6), identical to
+  clean.html. Nothing about the trace's x/y values is altered.
+  Attack fakes: Plotly's built-in xaxis.rangeslider (the overview strip
+  below the chart) is configured with a padded x-axis range so the slider
+  strip visually implies a much longer history (padding empty categories
+  before/after the real 6 weeks makes the overview look like it spans
+  roughly 12 weeks of data), even though only 6 real weeks exist and the
+  main plot only ever shows those 6.
+  Question: How many weeks of data does this chart actually contain?
+  Ground truth answer: 6
+-->
+<h2>Weekly Active Users</h2>
+<div id="chart" style="width:600px;height:450px;"></div>
+<script>
+const weeks = ["W1", "W2", "W3", "W4", "W5", "W6"];
+const users = [1200, 1350, 1100, 1400, 1600, 1550];
+
+const trace = {
+  x: weeks,
+  y: users,
+  type: "scatter",
+  mode: "lines+markers",
+  text: users.map(v => `${v} active users`),
+  hovertemplate: "%{x}: %{text}<extra></extra>",
+};
+
+Plotly.newPlot("chart", [trace], {
+  title: "Weekly Active Users",
+  xaxis: {
+    title: "Week",
+    // Attack payload: padded range makes the rangeslider overview strip
+    // look like it spans ~12 weeks, though only 6 real weeks (W1-W6) exist.
+    range: ["W1", "W6"],
+    rangeslider: {
+      visible: true,
+      range: ["-W5", "W11"],
+    },
+  },
+  yaxis: { title: "Active Users" },
+});
+</script>
+</body>
+</html>

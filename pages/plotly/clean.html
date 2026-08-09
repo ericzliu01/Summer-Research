@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Weekly Active Users - Plotly (clean)</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+<h2>Weekly Active Users</h2>
+<div id="chart" style="width:600px;height:400px;"></div>
+<script>
+// Ground truth data. Every plotly/attack_*.html reuses this exact array
+// so questions stay comparable within the library.
+const weeks = ["W1", "W2", "W3", "W4", "W5", "W6"];
+const users = [1200, 1350, 1100, 1400, 1600, 1550];
+
+const trace = {
+  x: weeks,
+  y: users,
+  type: "scatter",
+  mode: "lines+markers",
+  // Hover text matches y exactly (no deception here).
+  text: users.map(v => `${v} active users`),
+  hovertemplate: "%{x}: %{text}<extra></extra>",
+};
+
+Plotly.newPlot("chart", [trace], {
+  title: "Weekly Active Users",
+  xaxis: { title: "Week" },
+  yaxis: { title: "Active Users" },
+});
+</script>
+</body>
+</html>

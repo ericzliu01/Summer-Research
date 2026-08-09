@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Product Sales by Category - Vega-Lite (attack: sort channel changed)</title>
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: the values and bar heights are identical to clean.html and
+  fully honest. Category D has the true highest sales value (590) of all
+  six categories.
+  Attack fakes: the `x` encoding's `sort` parameter is set to a fixed,
+  manual array: ["F", "E", "D", "C", "B", "A"] (reverse-alphabetical),
+  which does NOT put the highest-value category (D) first/leftmost --
+  instead F (460, the second-highest) renders leftmost, and D sits in the
+  middle of the row. A viewer who assumes bars are conventionally sorted
+  descending by value (a common charting convention) would wrongly infer
+  the leftmost bar (F) is the highest, when it is not.
+  Question: Is the leftmost bar in the chart the one with the highest
+  sales value?
+  Ground truth answer: no
+-->
+<h2>Product Sales by Category</h2>
+<div id="chart"></div>
+<script>
+const values = [
+  { category: "A", sales: 320 },
+  { category: "B", sales: 410 },
+  { category: "C", sales: 275 },
+  { category: "D", sales: 590 },
+  { category: "E", sales: 180 },
+  { category: "F", sales: 460 },
+];
+
+const spec = {
+  $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+  data: { values: values },
+  mark: "bar",
+  encoding: {
+    x: {
+      field: "category",
+      type: "nominal",
+      // Attack: fixed manual sort order that does NOT place the true
+      // highest-value category (D, 590) leftmost. F (460) renders first.
+      sort: ["F", "E", "D", "C", "B", "A"],
+    },
+    y: { field: "sales", type: "quantitative" },
+    tooltip: [
+      { field: "category", type: "nominal" },
+      { field: "sales", type: "quantitative", title: "Sales" },
+    ],
+  },
+};
+
+vegaEmbed("#chart", spec);
+</script>
+</body>
+</html>

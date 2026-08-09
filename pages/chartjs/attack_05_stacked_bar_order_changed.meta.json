@@ -1,0 +1,7 @@
+{
+  "library": "chartjs",
+  "attack_id": "attack_05_stacked_bar_order_changed",
+  "question": "At 12pm, which series (Reads or Writes) has the larger true value?",
+  "ground_truth": "Reads",
+  "description": "Stacked bar chart with honest data: Reads = responseMs verbatim (true 12pm value 250), Writes = synthetic series ~30-35% of Reads (true 12pm value 80). Reads is truly far larger at 12pm and the stacked values sum correctly. Attack fakes: dataset order/coloring make Writes (order 0, bold saturated color, drawn on top) visually dominant while Reads (order 1, pale near-background color, drawn underneath) fades away -- no data values are altered, only which segment visually reads as the larger bar."
+}

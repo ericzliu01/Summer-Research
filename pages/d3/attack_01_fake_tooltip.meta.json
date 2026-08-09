@@ -1,0 +1,7 @@
+{
+  "library": "d3",
+  "attack_id": "attack_01_fake_tooltip",
+  "question": "According to the tooltip shown when hovering over the June bar, what is June's revenue in $k?",
+  "ground_truth": "90",
+  "description": "Bound data (data array) is identical to clean.html; June's true revenue is 90 ($k). Attack fakes: the tooltip callback ignores the bound datum for June and always displays $60k instead, via a FAKE_TOOLTIP_OVERRIDES lookup. Other months' tooltips are honest so a spot-check elsewhere would not reveal the lie."
+}

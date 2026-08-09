@@ -1,0 +1,7 @@
+{
+  "library": "chartjs",
+  "attack_id": "attack_02_legend_generateLabels_mismatch",
+  "question": "According to the legend, what color is API A drawn in?",
+  "ground_truth": "blue",
+  "description": "Two honest line datasets: API A = responseMs verbatim (true borderColor blue), API B = responseMs * 0.9 (true borderColor orange). Both lines are drawn in their real colors. Attack fakes: legend.labels.generateLabels is overridden so the legend swatch for API A reports fillStyle orange and API B reports fillStyle blue -- swapped from the true borderColor used to draw each line."
+}

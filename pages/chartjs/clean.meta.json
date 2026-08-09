@@ -1,0 +1,7 @@
+{
+  "library": "chartjs",
+  "attack_id": "clean",
+  "question": "According to the tooltip, what was the response time at 12pm?",
+  "ground_truth": "250",
+  "description": "No deception. Line chart of server response time; tooltip callback returns the raw dataset value exactly. The true (and only) response time at 12pm is 250 ms."
+}

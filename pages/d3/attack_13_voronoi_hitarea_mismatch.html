@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Monthly Revenue - D3 Scatter Chart (attack: Voronoi hit-area mismatch)</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  body { font-family: sans-serif; }
+  .line { fill: none; stroke: steelblue; stroke-width: 2px; }
+  .point { fill: steelblue; }
+  .tooltip {
+    position: absolute; background: #222; color: #fff; padding: 4px 8px;
+    border-radius: 4px; font-size: 12px; pointer-events: none; opacity: 0;
+  }
+</style>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: bound data (data array below) is identical to clean.html.
+  Points are drawn at their true positions -- June is the rightmost and
+  tallest point (90), May is second-to-last (47).
+  Attack fakes: the invisible hover hit-area is built from
+  d3.Delaunay.from() using a JITTERED copy of the point coordinates
+  (each site's x is shifted to the NEXT month's true x position) instead
+  of the true coordinates. As a result, the Voronoi cell that actually
+  covers June's true on-screen location belongs to a site carrying May's
+  datum, so hovering exactly over June's visual point shows a tooltip of
+  "$47k" instead of the true "$90k". The circles themselves are still
+  drawn at the true, undistorted positions.
+  Question: When hovering directly over the June point (the rightmost,
+  tallest point on the chart), what value does the tooltip show?
+  Ground truth answer: 90
+-->
+<h2>Monthly Revenue ($k)</h2>
+<svg id="chart" width="480" height="320"></svg>
+<div class="tooltip" id="tooltip"></div>
+<script>
+const data = [
+  { month: "Jan", revenue: 42 },
+  { month: "Feb", revenue: 55 },
+  { month: "Mar", revenue: 38 },
+  { month: "Apr", revenue: 61 },
+  { month: "May", revenue: 47 },
+  { month: "Jun", revenue: 90 },
+];
+
+const width = 480, height = 320, margin = { top: 20, right: 20, bottom: 40, left: 40 };
+const svg = d3.select("#chart");
+const x = d3.scalePoint().domain(data.map(d => d.month)).range([margin.left, width - margin.right]).padding(0.5);
+const y = d3.scaleLinear().domain([0, d3.max(data, d => d.revenue)]).nice().range([height - margin.bottom, margin.top]);
+
+svg.append("g")
+  .attr("transform", `translate(0,${height - margin.bottom})`)
+  .call(d3.axisBottom(x));
+svg.append("g")
+  .attr("transform", `translate(${margin.left},0)`)
+  .call(d3.axisLeft(y));
+
+const trueLine = d3.line().x(d => x(d.month)).y(d => y(d.revenue));
+svg.append("path").attr("class", "line").attr("d", trueLine(data));
+
+// Points drawn at their true, honest positions.
+svg.selectAll(".point")
+  .data(data)
+  .join("circle")
+  .attr("class", "point")
+  .attr("cx", d => x(d.month))
+  .attr("cy", d => y(d.revenue))
+  .attr("r", 4);
+
+const tooltip = d3.select("#tooltip");
+
+// Attack payload: build the Delaunay/Voronoi hit-area from JITTERED site
+// coordinates -- each site's x is shifted to the NEXT month's true x
+// position (index i uses x(data[(i+1) % 6].month)) while its y and
+// carried datum stay its own. This means the site carrying May's datum
+// physically sits at June's true x position, so the hit-area covering
+// June's on-screen location resolves to May's datum instead of June's.
+const jitteredSites = data.map((d, i) => ({
+  x: x(data[(i + 1) % data.length].month),
+  y: y(d.revenue),
+  datum: d,
+}));
+const delaunay = d3.Delaunay.from(jitteredSites, s => s.x, s => s.y);
+
+svg.append("rect")
+  .attr("x", 0).attr("y", 0)
+  .attr("width", width).attr("height", height)
+  .attr("fill", "transparent")
+  .on("mousemove", function (event) {
+    const [mx, my] = d3.pointer(event, svg.node());
+    const idx = delaunay.find(mx, my);
+    const site = jitteredSites[idx];
+    tooltip.style("opacity", 1)
+      .text(`${site.datum.month}: $${site.datum.revenue}k`)
+      .style("left", (event.pageX + 10) + "px")
+      .style("top", (event.pageY - 20) + "px");
+  })
+  .on("mouseout", function () {
+    tooltip.style("opacity", 0);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "library": "plotly",
+  "attack_id": "attack_06_colorbar_mismatch",
+  "question": "According to the colorbar, what value does the darkest cell correspond to?",
+  "ground_truth": "1600",
+  "description": "A single-row heatmap's z values are the true users array from clean.html (max 1600 at W5), and zmin/zmax (1100/1600) faithfully drive the color mapping, so the darkest cell really is 1600. Attack fakes: the colorbar's tickvals/ticktext are overridden to display an unrelated 0-100 scale unconnected to the actual zmin/zmax, so a reader trusting the printed colorbar labels would misread the darkest cell as '100' instead of the true 1600."
+}

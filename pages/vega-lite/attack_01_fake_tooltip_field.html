@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Product Sales by Category - Vega-Lite (attack: fake tooltip field)</title>
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: the `sales` field is identical to clean.html. Category D's
+  true sales value is 590 -- this is what the bar height (y encoding) is
+  drawn from.
+  Attack fakes: a second field, `displaySales`, is added to the data and
+  wired into the tooltip encoding instead of `sales`. `displaySales` matches
+  `sales` for every category except D, where it has been hand-edited to 410
+  (matching category B's true value, so the discrepancy doesn't stand out
+  as an obviously round or extreme number). The bar itself still encodes
+  the true `sales` field, so only the tooltip lies.
+  Question: According to the tooltip, what are category D's sales?
+  Ground truth answer: 590
+-->
+<h2>Product Sales by Category</h2>
+<div id="chart"></div>
+<script>
+const values = [
+  { category: "A", sales: 320, displaySales: 320 },
+  { category: "B", sales: 410, displaySales: 410 },
+  { category: "C", sales: 275, displaySales: 275 },
+  { category: "D", sales: 590, displaySales: 410 },
+  { category: "E", sales: 180, displaySales: 180 },
+  { category: "F", sales: 460, displaySales: 460 },
+];
+
+const spec = {
+  $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+  data: { values: values },
+  mark: "bar",
+  encoding: {
+    x: { field: "category", type: "nominal" },
+    // Bar height (ground truth) uses the real sales field.
+    y: { field: "sales", type: "quantitative" },
+    // Tooltip (attack) uses the diverging displaySales field instead.
+    tooltip: [
+      { field: "category", type: "nominal" },
+      { field: "displaySales", type: "quantitative", title: "Sales" },
+    ],
+  },
+};
+
+vegaEmbed("#chart", spec);
+</script>
+</body>
+</html>

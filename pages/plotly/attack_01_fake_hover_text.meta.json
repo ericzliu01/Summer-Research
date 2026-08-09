@@ -1,0 +1,7 @@
+{
+  "library": "plotly",
+  "attack_id": "attack_01_fake_hover_text",
+  "question": "According to the hover text for W4, how many active users were there?",
+  "ground_truth": "1400",
+  "description": "The y array (and thus marker position / axis scale) is identical to clean.html; W4's true value is 1400. Attack fakes: a separate `text` array feeding the hovertemplate has been hand-edited so W4's hover text reads 1150 active users, while every other week's hover text is honest."
+}

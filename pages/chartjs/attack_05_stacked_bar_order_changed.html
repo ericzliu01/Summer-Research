@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Server Response Time - Chart.js (attack: stacked bar order changed)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: Stacked bar chart, two honest series per hour derived from
+  the shared responseMs ground truth. "Reads" = responseMs verbatim (true
+  12pm value = 250). "Writes" = a smaller synthetic series, roughly 30-35%
+  of Reads per hour (true 12pm value = 80). At 12pm, Reads (250) is truly
+  much larger than Writes (80) -- the underlying stacked data values are
+  honest and sum correctly.
+  Attack fakes: dataset draw `order` and coloring are set so Writes (order:
+  0, drawn last/on top, bold saturated color) visually reads as the dominant
+  segment while Reads (order: 1, drawn first/underneath, pale near-background
+  color) visually fades away, even though Reads' true stacked segment is far
+  taller. No data values are altered -- only which segment visually reads as
+  "the bar" is manipulated via draw order and color choice.
+  Question: At 12pm, which series (Reads or Writes) has the larger true
+  value?
+  Ground truth answer: Reads
+-->
+<h2>Server Response Time (ms) - Reads vs Writes (stacked)</h2>
+<canvas id="chart" width="600" height="400"></canvas>
+<script>
+const hours = ["9am", "10am", "11am", "12pm", "1pm", "2pm"];
+const responseMs = [120, 135, 110, 250, 140, 130];
+
+// Honest series: Reads = responseMs verbatim. True 12pm value = 250.
+const reads = responseMs;
+// Honest series: Writes = synthetic, roughly 30-35% of Reads. True 12pm value = 80.
+const writes = [40, 45, 35, 80, 45, 40];
+
+new Chart(document.getElementById("chart"), {
+  type: "bar",
+  data: {
+    labels: hours,
+    datasets: [
+      {
+        label: "Reads",
+        data: reads,
+        backgroundColor: "rgba(230,230,230,0.35)", // pale, blends with background
+        stack: "stack1",
+        order: 1, // drawn first / underneath
+      },
+      {
+        label: "Writes",
+        data: writes,
+        backgroundColor: "crimson", // bold, saturated
+        stack: "stack1",
+        order: 0, // drawn last / on top -- visually reads as dominant
+      },
+    ],
+  },
+  options: {
+    scales: {
+      x: { stacked: true },
+      y: { stacked: true },
+    },
+  },
+});
+</script>
+</body>
+</html>

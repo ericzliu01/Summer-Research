@@ -1,0 +1,7 @@
+{
+  "library": "d3",
+  "attack_id": "attack_13_voronoi_hitarea_mismatch",
+  "question": "When hovering directly over the June point (the rightmost, tallest point on the chart), what value does the tooltip show?",
+  "ground_truth": "90",
+  "description": "Bound data is identical to clean.html; points are drawn at their true positions, with June the rightmost/tallest point at 90 and May second-to-last at 47. Attack fakes: the invisible Delaunay/Voronoi hover hit-area is built from a jittered copy of the point coordinates (each site's x shifted to the next month's true x position) instead of the true coordinates, so the hit-area covering June's true on-screen location actually belongs to the site carrying May's datum -- hovering exactly over June's visual point shows '$47k' instead of the true '$90k'."
+}

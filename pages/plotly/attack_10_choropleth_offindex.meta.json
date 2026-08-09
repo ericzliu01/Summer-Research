@@ -1,0 +1,7 @@
+{
+  "library": "plotly",
+  "attack_id": "attack_10_choropleth_offindex",
+  "question": "Which region has 1400 users, according to the choropleth?",
+  "ground_truth": "Region D",
+  "description": "The true users array from clean.html is mapped one-per-week onto 6 fabricated regions in week order: W1=1200->Region A, W2=1350->Region B, W3=1100->Region C, W4=1400->Region D, W5=1600->Region E, W6=1550->Region F. Attack fakes: the locations array is shifted by one index relative to z, so the color/value 1400 (true W4) is drawn/labeled under Region C instead of the correct Region D. Implemented as a colored bar chart (labeled 'bar proxy for choropleth') to keep the off-by-one indexing mechanism simple and dependency-free while preserving the same region/value mismatch a geo choropleth would exhibit."
+}

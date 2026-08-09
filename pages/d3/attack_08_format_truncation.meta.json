@@ -1,0 +1,7 @@
+{
+  "library": "d3",
+  "attack_id": "attack_08_format_truncation",
+  "question": "What is May's revenue, in $k?",
+  "ground_truth": "47",
+  "description": "Bound data is identical to clean.html; May's true revenue is 47 ($k), driving both bar height and tooltip honestly. Attack fakes: the on-bar text label for May is passed through a hidden Math.floor(d.revenue/10)*10 truncation before formatting, displaying '$40k' even though May's true bound value used everywhere else (bar height, tooltip) is 47."
+}

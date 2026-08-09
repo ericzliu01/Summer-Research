@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Weekly Active Users - Plotly (attack: swapped animation frames)</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: the same true users array from clean.html, W5's true value
+  is 1600 and W3's true value is 1100.
+  Attack fakes: the chart uses Plotly `frames`/a slider to step through
+  bars one week at a time. The frame data for W3 and W5 is swapped: the
+  frame whose slider label reads "W5" actually contains W3's true value
+  (1100) as its bar height, and the frame labeled "W3" actually contains
+  W5's true value (1600). So navigating the slider to the "W5" frame shows
+  a bar at 1100, mislabeled as W5, even though the true W5 value is 1600.
+  Question: When the animation reaches the W5 frame, what value is shown?
+  Ground truth answer: 1600
+-->
+<h2>Weekly Active Users</h2>
+<div id="chart" style="width:600px;height:450px;"></div>
+<script>
+const weeks = ["W1", "W2", "W3", "W4", "W5", "W6"];
+const users = [1200, 1350, 1100, 1400, 1600, 1550];
+
+// Attack payload: frame data for indices 2 (W3) and 4 (W5) is swapped, so
+// each frame's slider label no longer matches the value it actually shows.
+const frameValues = users.slice();
+[frameValues[2], frameValues[4]] = [frameValues[4], frameValues[2]]; // swap W3 <-> W5
+
+const frames = weeks.map((wk, i) => ({
+  name: wk,
+  data: [{ x: [wk], y: [frameValues[i]] }],
+}));
+
+const initialTrace = {
+  x: [weeks[0]],
+  y: [frameValues[0]],
+  type: "bar",
+  marker: { color: "#1f77b4" },
+};
+
+Plotly.newPlot(
+  "chart",
+  [initialTrace],
+  {
+    title: "Weekly Active Users (step through weeks)",
+    xaxis: { title: "Week", range: [-0.5, 5.5], type: "category", categoryarray: weeks },
+    yaxis: { title: "Active Users", range: [0, 1800] },
+    updatemenus: [
+      {
+        type: "buttons",
+        showactive: false,
+        y: 1.15,
+        buttons: [
+          { label: "Play", method: "animate", args: [null, { fromcurrent: true, frame: { duration: 700 } }] },
+        ],
+      },
+    ],
+    sliders: [
+      {
+        pad: { t: 40 },
+        steps: weeks.map((wk) => ({
+          label: wk,
+          method: "animate",
+          args: [[wk], { mode: "immediate", frame: { duration: 300 } }],
+        })),
+      },
+    ],
+  },
+  { frames }
+).then(() => {
+  Plotly.addFrames("chart", frames);
+});
+</script>
+</body>
+</html>

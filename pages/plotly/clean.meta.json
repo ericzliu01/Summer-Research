@@ -1,0 +1,7 @@
+{
+  "library": "plotly",
+  "attack_id": "clean",
+  "question": "According to the hover text for W4, how many active users were there?",
+  "ground_truth": "1400",
+  "description": "No deception. Line/scatter chart of weekly active users; hover text matches the true y values exactly. W4's value is 1400."
+}

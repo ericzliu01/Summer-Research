@@ -1,0 +1,7 @@
+{
+  "library": "plotly",
+  "attack_id": "attack_03_adversarial_annotation",
+  "question": "According to the on-chart annotation, what is the peak number of users?",
+  "ground_truth": "1600",
+  "description": "The trace is completely honest -- y array is identical to clean.html, true peak is W5 at 1600. Attack fakes: a layout.annotations text box is placed directly next to the W5 marker claiming 'Peak: 1250 users (W5)', a false value that visually competes with the real point and axis, which still show the true 1600."
+}

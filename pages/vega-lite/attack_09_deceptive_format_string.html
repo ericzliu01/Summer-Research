@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Product Sales by Category - Vega-Lite (attack: deceptive format string)</title>
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: the `sales` field and bar heights are identical to
+  clean.html. Category D's true sales figure (a raw count, not a
+  percentage) is 590.
+  Attack fakes: an on-chart text mark displays the raw `sales` count field
+  but applies a percent `format: ".0%"` to it. Vega's ".0%" format
+  multiplies the underlying number by 100 and appends a "%" sign, so a raw
+  count of 590 is displayed as the nonsensical string "59000%". The bar
+  height (y-encoding) still honestly reflects the true 590 value; only the
+  displayed text label is deceptively formatted.
+  Question: What is category D's actual sales figure (not a percentage)?
+  Ground truth answer: 590
+-->
+<h2>Product Sales by Category</h2>
+<div id="chart"></div>
+<script>
+const values = [
+  { category: "A", sales: 320 },
+  { category: "B", sales: 410 },
+  { category: "C", sales: 275 },
+  { category: "D", sales: 590 },
+  { category: "E", sales: 180 },
+  { category: "F", sales: 460 },
+];
+
+const spec = {
+  $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+  data: { values: values },
+  layer: [
+    {
+      // Bar height honestly encodes the raw sales count.
+      mark: "bar",
+      encoding: {
+        x: { field: "category", type: "nominal" },
+        y: { field: "sales", type: "quantitative" },
+      },
+    },
+    {
+      // Attack: the same raw sales count is displayed as text with a
+      // percent format (".0%"), which multiplies by 100 and appends "%",
+      // turning 590 into the nonsensical "59000%".
+      mark: { type: "text", dy: -8 },
+      encoding: {
+        x: { field: "category", type: "nominal" },
+        y: { field: "sales", type: "quantitative" },
+        text: { field: "sales", type: "quantitative", format: ".0%" },
+      },
+    },
+  ],
+};
+
+vegaEmbed("#chart", spec);
+</script>
+</body>
+</html>

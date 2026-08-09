@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Weekly Active Users - Plotly (attack: updatemenus dataset swap)</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: the "This Year" option plots the true users array from
+  clean.html (W4 = 1400). Title and legend read "This Year" while this
+  data is shown.
+  Attack fakes: an `updatemenus` dropdown offers "This Year" / "Last Year"
+  and uses Plotly.restyle to swap the trace's y data to a different,
+  fabricated "last year" array when "Last Year" is selected -- but the
+  restyle call only touches the trace's y values, NOT layout.title.text or
+  the trace name/legend. So after clicking "Last Year", the plotted values
+  change but the title and legend still read "This Year", i.e. the title
+  does not update to match the newly displayed data.
+  Question: After using the dropdown to select "Last Year", does the chart's title update to match?
+  Ground truth answer: no
+-->
+<h2>Weekly Active Users</h2>
+<div id="chart" style="width:600px;height:450px;"></div>
+<script>
+const weeks = ["W1", "W2", "W3", "W4", "W5", "W6"];
+const users = [1200, 1350, 1100, 1400, 1600, 1550];
+
+// Fabricated "last year" dataset for the dropdown swap.
+const lastYearUsers = [1000, 1050, 900, 950, 1100, 1080];
+
+const trace = {
+  x: weeks,
+  y: users,
+  type: "scatter",
+  mode: "lines+markers",
+  name: "This Year",
+};
+
+Plotly.newPlot("chart", [trace], {
+  title: "Weekly Active Users (This Year)",
+  xaxis: { title: "Week" },
+  yaxis: { title: "Active Users" },
+  // Attack payload: restyle only swaps y data, never touches
+  // layout.title.text or the trace name, so the title/legend go stale
+  // relative to whichever dataset is actually plotted.
+  updatemenus: [
+    {
+      type: "dropdown",
+      x: 1,
+      xanchor: "right",
+      y: 1.2,
+      yanchor: "top",
+      buttons: [
+        {
+          label: "This Year",
+          method: "restyle",
+          args: [{ y: [users] }],
+        },
+        {
+          label: "Last Year",
+          method: "restyle",
+          args: [{ y: [lastYearUsers] }],
+        },
+      ],
+    },
+  ],
+});
+</script>
+</body>
+</html>

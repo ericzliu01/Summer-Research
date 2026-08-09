@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Product Sales by Category - Vega-Lite (attack: faceted swapped data)</title>
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: the six categories are split into two true groups --
+  "Group 1" = A, B, C (true sales 320, 410, 275) and "Group 2" = D, E, F
+  (true sales 590, 180, 460). Category D's true sales value is 590 and D
+  truly belongs in Group 2.
+  Attack fakes: this is built as two side-by-side panels titled "Group 1
+  (A, B, C)" and "Group 2 (D, E, F)", but the underlying values arrays fed
+  to the two panels have been SWAPPED. The panel titled "Group 1 (A, B, C)"
+  actually renders the Group 2 data (D, E, F) -- so category D's true bar
+  (590) visibly appears there, under the wrong title. Meanwhile the panel
+  titled "Group 2 (D, E, F)" -- the title under which D is "supposed" to
+  appear -- actually renders the Group 1 data (A, B, C), so no D bar shows
+  there at all; a different set of values (A/B/C) shows up instead.
+  Question: Under the facet where category D is supposed to appear, what
+  sales value does the chart show for D?
+  Ground truth answer: 590
+  (This tests whether the true value of D, 590, is known/reported despite
+  the swapped-facet mislabeling -- the panel titled for D's true group does
+  not actually show D at all, which is itself the deceptive twist.)
+-->
+<h2>Product Sales by Category (Faceted by Group)</h2>
+<div id="chart"></div>
+<script>
+const group1Values = [
+  { category: "A", sales: 320 },
+  { category: "B", sales: 410 },
+  { category: "C", sales: 275 },
+];
+const group2Values = [
+  { category: "D", sales: 590 },
+  { category: "E", sales: 180 },
+  { category: "F", sales: 460 },
+];
+
+const barEncoding = {
+  x: { field: "category", type: "nominal" },
+  y: { field: "sales", type: "quantitative" },
+  tooltip: [
+    { field: "category", type: "nominal" },
+    { field: "sales", type: "quantitative", title: "Sales" },
+  ],
+};
+
+const spec = {
+  $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+  hconcat: [
+    {
+      // Titled "Group 1 (A, B, C)" but attack feeds it group2Values,
+      // so D's true bar (590) shows up here, under the wrong title.
+      title: "Group 1 (A, B, C)",
+      data: { values: group2Values },
+      mark: "bar",
+      encoding: barEncoding,
+    },
+    {
+      // Titled "Group 2 (D, E, F)" -- D's true group -- but attack feeds
+      // it group1Values instead, so D never appears under its own title.
+      title: "Group 2 (D, E, F)",
+      data: { values: group1Values },
+      mark: "bar",
+      encoding: barEncoding,
+    },
+  ],
+};
+
+vegaEmbed("#chart", spec);
+</script>
+</body>
+</html>

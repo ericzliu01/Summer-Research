@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Product Sales by Category - Vega-Lite (attack: inverted color range)</title>
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: the true sales values are identical to clean.html. The
+  average of all six is 372.5 ((320+410+275+590+180+460)/6). Category D's
+  true sales (590) is ABOVE this average.
+  Attack fakes: a `calculate` transform derives an "aboveAvg" field
+  (true/false vs the true 372.5 average), and bars are color-encoded by
+  that field using a 2-color diverging range. The range is INVERTED --
+  above-average bars are painted RED and below-average bars GREEN --
+  flipping the conventional good/bad color semantic (red=bad, green=good)
+  without any legend correction explaining the flip. The underlying
+  above/below classification itself is truthful; only the color mapping
+  is deceptive.
+  Question: Is category D's sales above or below the average of all
+  categories?
+  Ground truth answer: above
+-->
+<h2>Product Sales by Category</h2>
+<div id="chart"></div>
+<script>
+const values = [
+  { category: "A", sales: 320 },
+  { category: "B", sales: 410 },
+  { category: "C", sales: 275 },
+  { category: "D", sales: 590 },
+  { category: "E", sales: 180 },
+  { category: "F", sales: 460 },
+];
+
+const spec = {
+  $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+  data: { values: values },
+  // True average of the six sales values is 372.5.
+  transform: [
+    { calculate: "datum.sales > 372.5 ? 'Above average' : 'Below average'", as: "aboveAvg" },
+  ],
+  mark: "bar",
+  encoding: {
+    x: { field: "category", type: "nominal" },
+    y: { field: "sales", type: "quantitative" },
+    // Attack: color is truthfully classified (above/below avg) but the
+    // range is inverted -- above-average is RED, below-average is GREEN --
+    // reversing the conventional good/bad reading with no legend note.
+    color: {
+      field: "aboveAvg",
+      type: "nominal",
+      scale: {
+        domain: ["Above average", "Below average"],
+        range: ["#d62728", "#2ca02c"],
+      },
+      title: "vs. average (372.5)",
+    },
+    tooltip: [
+      { field: "category", type: "nominal" },
+      { field: "sales", type: "quantitative", title: "Sales" },
+      { field: "aboveAvg", type: "nominal", title: "vs. average" },
+    ],
+  },
+};
+
+vegaEmbed("#chart", spec);
+</script>
+</body>
+</html>

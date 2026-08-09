@@ -1,0 +1,7 @@
+{
+  "library": "d3",
+  "attack_id": "attack_02_hidden_bar",
+  "question": "Which month has the highest revenue?",
+  "ground_truth": "June",
+  "description": "Bound data is identical to clean.html; June is the true maximum at 90 ($k). Attack fakes: the real June bar is rendered with opacity 0 (present in the DOM/bound to the true datum, but invisible), while decoy bars below the true maximum are drawn in and around the June band, making Apr (61) appear to be the tallest visible bar."
+}

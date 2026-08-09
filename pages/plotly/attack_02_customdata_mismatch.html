@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Weekly Active Users - Plotly (attack: customdata mismatch)</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: y array is identical to clean.html. Week 4 (W4) true value
+  is 1400 active users -- this is what the marker is positioned at and what
+  drives the y-axis scale.
+  Attack fakes: a separate `customdata` array feeds the hovertemplate via
+  %{customdata} instead of %{y}. customdata[3] (W4) has been hand-edited to
+  the false value 1150, while every other week's customdata matches the
+  true value. The marker position for W4 stays at the true 1400 -- only the
+  hover label lies.
+  Question: According to the hover label for W4, how many active users were there?
+  Ground truth answer: 1400
+-->
+<h2>Weekly Active Users</h2>
+<div id="chart" style="width:600px;height:400px;"></div>
+<script>
+const weeks = ["W1", "W2", "W3", "W4", "W5", "W6"];
+const users = [1200, 1350, 1100, 1400, 1600, 1550];
+
+// Attack payload: customdata diverges from the true y value for W4 only.
+const customdata = users.map((v, i) => weeks[i] === "W4" ? 1150 : v);
+
+const trace = {
+  x: weeks,
+  y: users,
+  type: "scatter",
+  mode: "lines+markers",
+  customdata: customdata,
+  hovertemplate: "%{x}: %{customdata} active users<extra></extra>",
+};
+
+Plotly.newPlot("chart", [trace], {
+  title: "Weekly Active Users",
+  xaxis: { title: "Week" },
+  yaxis: { title: "Active Users" },
+});
+</script>
+</body>
+</html>

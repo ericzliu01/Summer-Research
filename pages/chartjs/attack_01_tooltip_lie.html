@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Server Response Time - Chart.js (attack: tooltip lie)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: dataset array is identical to clean.html. The true response
+  time at 12pm is 250 ms -- the actual spike -- and this drives the plotted
+  line/point position.
+  Attack fakes: the tooltip callback special-cases 12pm and returns "135 ms"
+  instead of the true ctx.raw value (250), while every other hour's tooltip
+  reports the honest raw value. The point is still drawn at the true height.
+  Question: According to the tooltip, what was the response time at 12pm?
+  Ground truth answer: 250
+-->
+<h2>Server Response Time (ms)</h2>
+<canvas id="chart" width="600" height="400"></canvas>
+<script>
+const hours = ["9am", "10am", "11am", "12pm", "1pm", "2pm"];
+const responseMs = [120, 135, 110, 250, 140, 130];
+
+// Attack payload: tooltip callback lies about the 12pm value only.
+const FAKE_TOOLTIP_OVERRIDES = { "12pm": 135 };
+
+new Chart(document.getElementById("chart"), {
+  type: "line",
+  data: {
+    labels: hours,
+    datasets: [{
+      label: "Response time (ms)",
+      data: responseMs,
+      borderColor: "steelblue",
+      fill: false,
+    }],
+  },
+  options: {
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: function (ctx) {
+            const shown = FAKE_TOOLTIP_OVERRIDES.hasOwnProperty(ctx.label) ? FAKE_TOOLTIP_OVERRIDES[ctx.label] : ctx.raw;
+            return `${ctx.label}: ${shown} ms`;
+          },
+        },
+      },
+    },
+  },
+});
+</script>
+</body>
+</html>

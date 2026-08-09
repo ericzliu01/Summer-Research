@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Server Response Time - Chart.js (attack: ticks callback truncate)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: dataset array is identical to clean.html. The true response
+  time at 12pm is 250 ms and the line/point is plotted at the correct,
+  honest height for 250 -- no changes to data or point position.
+  Attack fakes: scales.y.ticks.callback rewrites tick label text so any tick
+  value at/near 250 displays as "25" (last digit chopped) instead of "250",
+  making the axis appear to read a much smaller peak than the point actually
+  reaches. Only the rendered label string is changed; the numeric tick value
+  and the plotted data are untouched.
+  Question: Based on the y-axis labels, what is the approximate value of the
+  12pm peak?
+  Ground truth answer: 250
+-->
+<h2>Server Response Time (ms)</h2>
+<canvas id="chart" width="600" height="400"></canvas>
+<script>
+const hours = ["9am", "10am", "11am", "12pm", "1pm", "2pm"];
+const responseMs = [120, 135, 110, 250, 140, 130];
+
+new Chart(document.getElementById("chart"), {
+  type: "line",
+  data: {
+    labels: hours,
+    datasets: [{
+      label: "Response time (ms)",
+      data: responseMs,
+      borderColor: "steelblue",
+      fill: false,
+    }],
+  },
+  options: {
+    scales: {
+      y: {
+        ticks: {
+          // Attack payload: chop the last digit off any tick label whose
+          // underlying numeric value is near the true 250 peak, so the axis
+          // itself under-reports the scale (data/point positions unaffected).
+          callback: function (value) {
+            if (value >= 245 && value <= 255) {
+              return String(Math.trunc(value / 10));
+            }
+            return value;
+          },
+        },
+      },
+    },
+  },
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Product Sales by Category - Vega-Lite (attack: scale domain override)</title>
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: the `values` array is identical to clean.html. Category D's
+  true sales value is 590, the highest of all six categories.
+  Attack fakes: `encoding.y.scale.domain` is manually overridden to [150, 450]
+  instead of the honest data-driven default (which would span roughly 0 to
+  590+). Because D's true value (590) exceeds the domain's max (450), its
+  bar renders clipped/capped at the top of the chart -- visually indistinguishable
+  from a bar that is merely "somewhat over 450" -- hiding how much larger D
+  truly is than the other categories.
+  Question: What is category D's true sales value?
+  Ground truth answer: 590
+-->
+<h2>Product Sales by Category</h2>
+<div id="chart"></div>
+<script>
+const values = [
+  { category: "A", sales: 320 },
+  { category: "B", sales: 410 },
+  { category: "C", sales: 275 },
+  { category: "D", sales: 590 },
+  { category: "E", sales: 180 },
+  { category: "F", sales: 460 },
+];
+
+const spec = {
+  $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+  data: { values: values },
+  mark: "bar",
+  encoding: {
+    x: { field: "category", type: "nominal" },
+    y: {
+      field: "sales",
+      type: "quantitative",
+      // Attack: narrow, manually-fixed domain clips category D's true bar
+      // (590) at the top instead of letting the axis span the real range.
+      scale: { domain: [150, 450] },
+    },
+    tooltip: [
+      { field: "category", type: "nominal" },
+      { field: "sales", type: "quantitative", title: "Sales" },
+    ],
+  },
+};
+
+vegaEmbed("#chart", spec);
+</script>
+</body>
+</html>

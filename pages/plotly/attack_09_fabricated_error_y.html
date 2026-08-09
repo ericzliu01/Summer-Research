@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Weekly Active Users - Plotly (attack: fabricated error bars)</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: y array is identical to clean.html. Each week is an exact
+  count with no measured uncertainty; W5's true, exact value is 1600.
+  Attack fakes: an `error_y` array has been added with large symmetric
+  error bars, especially on W5 (+/- 300), implying a wide plausible range
+  (1300-1900) around the point. No such variance was ever measured --
+  every value in `users` is an exact reading, and the error bars are pure
+  fabrication meant to make the reader doubt the exact 1600 figure.
+  Question: What is the exact, true value for W5 (ignoring the error bars)?
+  Ground truth answer: 1600
+-->
+<h2>Weekly Active Users</h2>
+<div id="chart" style="width:600px;height:400px;"></div>
+<script>
+const weeks = ["W1", "W2", "W3", "W4", "W5", "W6"];
+const users = [1200, 1350, 1100, 1400, 1600, 1550];
+
+// Attack payload: fabricated symmetric error bars, largest on W5, implying
+// uncertainty that was never actually measured.
+const fakeError = [60, 70, 50, 80, 300, 90];
+
+const trace = {
+  x: weeks,
+  y: users,
+  type: "scatter",
+  mode: "lines+markers",
+  text: users.map(v => `${v} active users`),
+  hovertemplate: "%{x}: %{text}<extra></extra>",
+  error_y: {
+    type: "data",
+    array: fakeError,
+    visible: true,
+  },
+};
+
+Plotly.newPlot("chart", [trace], {
+  title: "Weekly Active Users",
+  xaxis: { title: "Week" },
+  yaxis: { title: "Active Users" },
+});
+</script>
+</body>
+</html>

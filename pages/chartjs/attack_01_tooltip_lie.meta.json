@@ -1,0 +1,7 @@
+{
+  "library": "chartjs",
+  "attack_id": "attack_01_tooltip_lie",
+  "question": "According to the tooltip, what was the response time at 12pm?",
+  "ground_truth": "250",
+  "description": "The dataset array is identical to clean.html; the true 12pm response time is 250 ms and drives the plotted point. Attack fakes: the tooltip callback special-cases 12pm and returns 135 ms instead of ctx.raw, while every other hour's tooltip is honest."
+}

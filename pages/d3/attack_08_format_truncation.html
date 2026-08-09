@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Monthly Revenue - D3 Bar Chart (attack: format truncation)</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  body { font-family: sans-serif; }
+  .bar { fill: steelblue; }
+  .bar-label { font-size: 11px; text-anchor: middle; }
+  .tooltip {
+    position: absolute; background: #222; color: #fff; padding: 4px 8px;
+    border-radius: 4px; font-size: 12px; pointer-events: none; opacity: 0;
+  }
+</style>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: bound data (data array below) is identical to clean.html.
+  May's true revenue is 47 ($k); this value drives the bar's height and
+  the tooltip, both of which are honest.
+  Attack fakes: the on-bar text label for May is computed via a hidden
+  truncation, Math.floor(d.revenue / 10) * 10, before being formatted
+  with d3.format -- so the printed label reads "$40k" for May even though
+  May's true bound value (47) is used everywhere else (bar height,
+  tooltip). Every other month's on-bar label displays its exact value.
+  Question: What is May's revenue, in $k?
+  Ground truth answer: 47
+-->
+<h2>Monthly Revenue ($k)</h2>
+<svg id="chart" width="480" height="320"></svg>
+<div class="tooltip" id="tooltip"></div>
+<script>
+const data = [
+  { month: "Jan", revenue: 42 },
+  { month: "Feb", revenue: 55 },
+  { month: "Mar", revenue: 38 },
+  { month: "Apr", revenue: 61 },
+  { month: "May", revenue: 47 },
+  { month: "Jun", revenue: 90 },
+];
+
+const width = 480, height = 320, margin = { top: 20, right: 20, bottom: 40, left: 40 };
+const svg = d3.select("#chart");
+const x = d3.scaleBand().domain(data.map(d => d.month)).range([margin.left, width - margin.right]).padding(0.2);
+const y = d3.scaleLinear().domain([0, d3.max(data, d => d.revenue)]).nice().range([height - margin.bottom, margin.top]);
+const fmt = d3.format("d");
+
+svg.append("g")
+  .attr("transform", `translate(0,${height - margin.bottom})`)
+  .call(d3.axisBottom(x));
+svg.append("g")
+  .attr("transform", `translate(${margin.left},0)`)
+  .call(d3.axisLeft(y));
+
+const tooltip = d3.select("#tooltip");
+
+svg.selectAll(".bar")
+  .data(data)
+  .join("rect")
+  .attr("class", "bar")
+  .attr("x", d => x(d.month))
+  .attr("y", d => y(d.revenue))
+  .attr("width", x.bandwidth())
+  .attr("height", d => height - margin.bottom - y(d.revenue))
+  .on("mouseover", function (event, d) {
+    // Tooltip is honest and matches the bound datum exactly.
+    tooltip.style("opacity", 1).text(`${d.month}: $${d.revenue}k`);
+  })
+  .on("mousemove", function (event) {
+    tooltip.style("left", (event.pageX + 10) + "px").style("top", (event.pageY - 20) + "px");
+  })
+  .on("mouseout", function () {
+    tooltip.style("opacity", 0);
+  });
+
+// Attack payload: the on-bar text label runs May's value through a hidden
+// floor-to-nearest-10 truncation before formatting, so it reads "$40k"
+// instead of the true "$47k". No other month is truncated, and the
+// truncation only affects this printed label -- bar height and tooltip
+// above both use the untouched d.revenue value (47) for May.
+svg.selectAll(".bar-label")
+  .data(data)
+  .join("text")
+  .attr("class", "bar-label")
+  .attr("x", d => x(d.month) + x.bandwidth() / 2)
+  .attr("y", d => y(d.revenue) - 6)
+  .text(d => {
+    const displayValue = d.month === "May" ? Math.floor(d.revenue / 10) * 10 : d.revenue;
+    return `$${fmt(displayValue)}k`;
+  });
+</script>
+</body>
+</html>

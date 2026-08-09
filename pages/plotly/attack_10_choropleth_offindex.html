@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Weekly Active Users - Plotly (attack: choropleth off-by-one index)</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: the same true weekly users array from clean.html is mapped
+  one-per-week onto 6 fabricated region codes, in week order:
+    W1=1200 -> Region A
+    W2=1350 -> Region B
+    W3=1100 -> Region C
+    W4=1400 -> Region D
+    W5=1600 -> Region E
+    W6=1550 -> Region F
+  So Region D is the true, correctly-indexed region for the W4 value, 1400.
+  Attack fakes: the `locations` array (region codes) is shifted by one
+  index relative to `z` (the values), so each color/value ends up drawn
+  over the wrong region's label. Concretely, z stays in true week order
+  [1200,1350,1100,1400,1600,1550] but locations is rotated so the value
+  1400 (true W4) is rendered/labeled under Region C instead of Region D,
+  and 1100 (true W3) ends up mislabeled under Region D.
+  Question: Which region has 1400 users, according to the choropleth?
+  Ground truth answer: Region D
+-->
+<h2>Weekly Active Users by Region</h2>
+<div id="chart" style="width:600px;height:450px;"></div>
+<script>
+const weeks = ["W1", "W2", "W3", "W4", "W5", "W6"];
+const users = [1200, 1350, 1100, 1400, 1600, 1550];
+
+// Ground truth region mapping, in true week order.
+const trueRegions = ["Region A", "Region B", "Region C", "Region D", "Region E", "Region F"];
+
+// Attack payload: locations shifted by one index relative to z, so the
+// value 1400 (true W4 / index 3) gets drawn under trueRegions[2] =
+// "Region C" instead of the correct "Region D".
+const shiftedLocations = [
+  trueRegions[5], // paired with z[0]=1200 (should be Region A)
+  trueRegions[0], // paired with z[1]=1350 (should be Region B)
+  trueRegions[1], // paired with z[2]=1100 (should be Region C)
+  trueRegions[2], // paired with z[3]=1400 (should be Region D) <- mislabeled as Region C
+  trueRegions[3], // paired with z[4]=1600 (should be Region E) <- mislabeled as Region D
+  trueRegions[4], // paired with z[5]=1550 (should be Region F) <- mislabeled as Region E
+];
+
+const trace = {
+  type: "bar",
+  x: shiftedLocations,
+  y: users,
+  text: users.map(v => `${v} users`),
+  hovertemplate: "%{x}: %{y} users<extra></extra>",
+  marker: { color: users, colorscale: "YlOrRd" },
+};
+
+Plotly.newPlot("chart", [trace], {
+  title: "Weekly Active Users by Region (bar proxy for choropleth)",
+  xaxis: { title: "Region" },
+  yaxis: { title: "Active Users" },
+});
+</script>
+</body>
+</html>

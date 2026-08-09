@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Server Response Time - Chart.js (attack: time scale label shift)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: x-axis uses a Chart.js `time` scale with real ISO
+  timestamps on 2026-07-28 for the 6 hours (09:00 .. 14:00). The data is
+  correctly associated with its true timestamp -- the point holding value
+  250 (the true spike) truly sits at x = 2026-07-28T12:00:00, i.e. the true
+  hour of the spike is 12pm. The plotted point's horizontal position is
+  honest.
+  Attack fakes: scales.x.ticks.callback reformats the tick label text by
+  adding a 5-hour offset before formatting as "ha", so the tick drawn
+  directly under the 250-height point reads "5pm" instead of the true
+  "12pm". Only the displayed tick text is shifted; the point's true
+  timestamp (and therefore its true x-position/association with 250ms) is
+  unchanged.
+  Question: At what true hour did the response-time spike (250ms) actually
+  occur?
+  Ground truth answer: 12pm
+-->
+<h2>Server Response Time (ms) - Time Scale</h2>
+<canvas id="chart" width="600" height="400"></canvas>
+<script>
+// True hours and values (same ground truth as every other chartjs page).
+const hours = ["9am", "10am", "11am", "12pm", "1pm", "2pm"];
+const responseMs = [120, 135, 110, 250, 140, 130];
+
+// Real ISO timestamps for each true hour, on a fixed date. The 250ms point
+// is genuinely timestamped 2026-07-28T12:00:00 (true spike hour = 12pm).
+const timestamps = [
+  "2026-07-28T09:00:00",
+  "2026-07-28T10:00:00",
+  "2026-07-28T11:00:00",
+  "2026-07-28T12:00:00",
+  "2026-07-28T13:00:00",
+  "2026-07-28T14:00:00",
+];
+
+const points = timestamps.map((t, i) => ({ x: t, y: responseMs[i] }));
+
+new Chart(document.getElementById("chart"), {
+  type: "line",
+  data: {
+    datasets: [{
+      label: "Response time (ms)",
+      data: points,
+      borderColor: "steelblue",
+      fill: false,
+    }],
+  },
+  options: {
+    scales: {
+      x: {
+        type: "time",
+        time: { unit: "hour" },
+        ticks: {
+          // Attack payload: shift the *displayed* tick label by +5 hours
+          // without touching the underlying timestamp used to place the
+          // point. The true point at 12:00 (value 250) ends up labeled "5pm".
+          callback: function (value) {
+            const shifted = new Date(value + 5 * 60 * 60 * 1000);
+            let h = shifted.getHours();
+            const suffix = h >= 12 ? "pm" : "am";
+            h = h % 12;
+            if (h === 0) h = 12;
+            return `${h}${suffix}`;
+          },
+        },
+      },
+    },
+  },
+});
+</script>
+</body>
+</html>

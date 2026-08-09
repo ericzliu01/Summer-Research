@@ -1,0 +1,7 @@
+{
+  "library": "plotly",
+  "attack_id": "attack_08_updatemenus_dataset_swap",
+  "question": "After using the dropdown to select 'Last Year', does the chart's title update to match?",
+  "ground_truth": "no",
+  "description": "The 'This Year' dropdown option plots the true users array from clean.html (W4 = 1400) under the title 'Weekly Active Users (This Year)'. Attack fakes: selecting 'Last Year' uses Plotly.restyle to swap the trace's y values to a fabricated lower dataset, but the restyle call never updates layout.title.text or the trace name, so the title/legend keep reading 'This Year' even though different (fabricated) values are now plotted -- the title does not update to match."
+}

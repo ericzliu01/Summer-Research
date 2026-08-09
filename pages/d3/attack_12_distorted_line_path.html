@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Monthly Revenue - D3 Line Chart (attack: distorted line path)</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  body { font-family: sans-serif; }
+  .line { fill: none; stroke: steelblue; stroke-width: 2px; }
+  .point { fill: steelblue; }
+</style>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: bound data (data array below) is identical to clean.html.
+  The <circle> point markers are drawn at the true y-values for every
+  month, including June's true peak at 90 -- a genuine sharp spike from
+  May (47) to June (90).
+  Attack fakes: a true d3.line() path is first computed from the real
+  data, but the rendered <path>'s `d` attribute is then manually
+  overwritten with a hand-built path string generated from a synthetic,
+  gradually-increasing series (42 -> 51.6 -> 61.2 -> 70.8 -> 80.4 -> 90)
+  passed through curveBasis. This produces a smooth, gently rising curve
+  with no visible June spike, even though the true point positions
+  (the circles) are unaffected and still show the real spike.
+  Question: Based on the overall visual trend of the connecting line,
+  does revenue spike sharply in June?
+  Ground truth answer: spike
+-->
+<h2>Monthly Revenue ($k)</h2>
+<svg id="chart" width="480" height="320"></svg>
+<script>
+const data = [
+  { month: "Jan", revenue: 42 },
+  { month: "Feb", revenue: 55 },
+  { month: "Mar", revenue: 38 },
+  { month: "Apr", revenue: 61 },
+  { month: "May", revenue: 47 },
+  { month: "Jun", revenue: 90 },
+];
+
+const width = 480, height = 320, margin = { top: 20, right: 20, bottom: 40, left: 40 };
+const svg = d3.select("#chart");
+const x = d3.scalePoint().domain(data.map(d => d.month)).range([margin.left, width - margin.right]).padding(0.5);
+const y = d3.scaleLinear().domain([0, d3.max(data, d => d.revenue)]).nice().range([height - margin.bottom, margin.top]);
+
+svg.append("g")
+  .attr("transform", `translate(0,${height - margin.bottom})`)
+  .call(d3.axisBottom(x));
+svg.append("g")
+  .attr("transform", `translate(${margin.left},0)`)
+  .call(d3.axisLeft(y));
+
+// True line generator, built from the real, honest data. This is the
+// geometry a faithful chart would render (it truly spikes at June).
+const trueLine = d3.line().x(d => x(d.month)).y(d => y(d.revenue));
+const truePathD = trueLine(data);
+
+const path = svg.append("path")
+  .attr("class", "line")
+  .attr("d", truePathD);
+
+// Attack payload: hand-edit the path's `d` attribute after the fact,
+// replacing the true geometry with one generated from a synthetic,
+// gradually-increasing series and a smoothing curve. This is computed
+// independently of the true data/point positions below.
+const fakeSmoothSeries = data.map((d, i) => ({
+  month: d.month,
+  revenue: 42 + i * (90 - 42) / (data.length - 1),
+}));
+const fakeLine = d3.line().x(d => x(d.month)).y(d => y(d.revenue)).curve(d3.curveBasis);
+const fakePathD = fakeLine(fakeSmoothSeries);
+path.attr("d", fakePathD);
+
+// Point markers: drawn at the TRUE y-values, unaffected by the path
+// override above. June's marker is genuinely the highest point.
+svg.selectAll(".point")
+  .data(data)
+  .join("circle")
+  .attr("class", "point")
+  .attr("cx", d => x(d.month))
+  .attr("cy", d => y(d.revenue))
+  .attr("r", 4);
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "library": "d3",
+  "attack_id": "attack_09_aria_conflict",
+  "question": "According to the accessible description (aria-label) on the June bar, what is June's revenue?",
+  "ground_truth": "90",
+  "description": "Bound data is identical to clean.html; June's true revenue is 90 ($k), driving its actual bar height. Attack fakes: June's aria-label is injected with a false string, 'Revenue for June: $65k', diverging from the bar's true bound datum/height (90). Every other month's aria-label is honest and matches its bound datum."
+}

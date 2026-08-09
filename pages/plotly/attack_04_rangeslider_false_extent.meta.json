@@ -1,0 +1,7 @@
+{
+  "library": "plotly",
+  "attack_id": "attack_04_rangeslider_false_extent",
+  "question": "How many weeks of data does this chart actually contain?",
+  "ground_truth": "6",
+  "description": "The underlying data is identical to clean.html: exactly 6 weeks (W1-W6). Attack fakes: xaxis.rangeslider is given a padded range so the overview strip visually implies a much longer history (roughly 12 weeks), even though the main plot and trace only ever contain the 6 real weeks."
+}

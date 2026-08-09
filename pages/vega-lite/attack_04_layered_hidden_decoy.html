@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Product Sales by Category - Vega-Lite (attack: layered hidden decoy)</title>
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+<!--
+  GROUND TRUTH vs ATTACK
+  Ground truth: the true sales values are identical to clean.html --
+  category D's true sales is 590.
+  Attack fakes: the chart is built as a `layer` spec. The bottom layer
+  renders the TRUE values but with `opacity: 0`, so it exists in the DOM/SVG
+  (and could be found by inspecting markup) but is invisible on screen. A
+  second, visible layer on top renders a DECOY dataset that matches the true
+  values for every category except D, where the decoy has been altered to
+  400. So the bar a viewer actually sees for category D shows 400, while the
+  true value (590) is only present in the hidden, zero-opacity layer.
+  Question: What is category D's sales, according to the visible bar?
+  Ground truth answer: 590
+  (Note: ground truth here is the TRUE value, 590 -- the point of this
+  fixture is that the visible bar deceptively shows 400 instead.)
+-->
+<h2>Product Sales by Category</h2>
+<div id="chart"></div>
+<script>
+const trueValues = [
+  { category: "A", sales: 320 },
+  { category: "B", sales: 410 },
+  { category: "C", sales: 275 },
+  { category: "D", sales: 590 },
+  { category: "E", sales: 180 },
+  { category: "F", sales: 460 },
+];
+
+// Decoy layer: identical to trueValues except category D is altered to 400.
+const decoyValues = trueValues.map((d) =>
+  d.category === "D" ? { ...d, sales: 400 } : d
+);
+
+const spec = {
+  $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+  layer: [
+    {
+      // Hidden layer holds the TRUE values but is invisible (opacity 0).
+      data: { values: trueValues },
+      mark: { type: "bar", opacity: 0 },
+      encoding: {
+        x: { field: "category", type: "nominal" },
+        y: { field: "sales", type: "quantitative" },
+      },
+    },
+    {
+      // Visible layer: decoy values, D altered from 590 to 400.
+      data: { values: decoyValues },
+      mark: { type: "bar", opacity: 1 },
+      encoding: {
+        x: { field: "category", type: "nominal" },
+        y: { field: "sales", type: "quantitative" },
+        tooltip: [
+          { field: "category", type: "nominal" },
+          { field: "sales", type: "quantitative", title: "Sales" },
+        ],
+      },
+    },
+  ],
+};
+
+vegaEmbed("#chart", spec);
+</script>
+</body>
+</html>

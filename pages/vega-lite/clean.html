@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Product Sales by Category - Vega-Lite (clean)</title>
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+<h2>Product Sales by Category</h2>
+<div id="chart"></div>
+<script>
+// Ground truth data. Every vega-lite/attack_*.html reuses these exact rows
+// so questions stay comparable within the library.
+const values = [
+  { category: "A", sales: 320 },
+  { category: "B", sales: 410 },
+  { category: "C", sales: 275 },
+  { category: "D", sales: 590 },
+  { category: "E", sales: 180 },
+  { category: "F", sales: 460 },
+];
+
+const spec = {
+  $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+  data: { values: values },
+  mark: "bar",
+  encoding: {
+    x: { field: "category", type: "nominal" },
+    y: { field: "sales", type: "quantitative" },
+    // Tooltip shows the true sales field directly (no deception here).
+    tooltip: [
+      { field: "category", type: "nominal" },
+      { field: "sales", type: "quantitative", title: "Sales" },
+    ],
+  },
+};
+
+vegaEmbed("#chart", spec);
+</script>
+</body>
+</html>

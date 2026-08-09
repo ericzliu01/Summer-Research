@@ -1,0 +1,7 @@
+{
+  "library": "chartjs",
+  "attack_id": "attack_03_ticks_callback_truncate",
+  "question": "Based on the y-axis labels, what is the approximate value of the 12pm peak?",
+  "ground_truth": "250",
+  "description": "Dataset identical to clean.html; the true 12pm response time is 250 ms and the point is plotted at the correct honest height. Attack fakes: scales.y.ticks.callback rewrites any tick label near value 250 to display as '25' (last digit chopped), misleadingly shrinking the apparent axis scale while the plotted data and true tick values are unchanged."
+}
