@@ -4,6 +4,32 @@
 <meta charset="utf-8">
 <title>Server Response Time - Chart.js (attack: legend generateLabels mismatch)</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --surface: #fcfcfb;
+    --page: #f9f9f7;
+    --ink: #0b0b0b;
+    --ink-secondary: #52514e;
+    --ink-muted: #898781;
+    --grid: #e1e0d9;
+  }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--ink);
+    margin: 0;
+    padding: 32px;
+  }
+  .card {
+    max-width: 620px;
+    background: var(--surface);
+    border: 1px solid var(--grid);
+    border-radius: 12px;
+    padding: 24px 28px 20px;
+  }
+  h2 { font-size: 17px; font-weight: 600; margin: 0 0 2px; }
+  .subtitle { font-size: 13px; color: var(--ink-secondary); margin: 0 0 16px; }
+</style>
 </head>
 <body>
 <!--
@@ -20,11 +46,16 @@
   Question: According to the legend, what color is API A drawn in?
   Ground truth answer: blue
 -->
-<h2>Server Response Time (ms) - API A vs API B</h2>
-<canvas id="chart" width="600" height="400"></canvas>
+<div class="card">
+  <h2>Server Response Time</h2>
+  <p class="subtitle">API A vs API B, milliseconds</p>
+  <canvas id="chart" width="560" height="320"></canvas>
+</div>
 <script>
 const hours = ["9am", "10am", "11am", "12pm", "1pm", "2pm"];
 const responseMs = [120, 135, 110, 250, 140, 130];
+
+const inkMuted = "#898781", grid = "#e1e0d9";
 
 // Honest second series derived from the same ground truth (API B = 0.9x API A).
 const apiB = responseMs.map(v => Math.round(v * 0.9));
@@ -39,6 +70,12 @@ new Chart(document.getElementById("chart"), {
         data: responseMs,
         borderColor: "blue",
         backgroundColor: "blue",
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: "#fcfcfb",
+        pointBorderColor: "blue",
+        pointBorderWidth: 2,
+        tension: 0,
         fill: false,
       },
       {
@@ -46,14 +83,25 @@ new Chart(document.getElementById("chart"), {
         data: apiB,
         borderColor: "orange",
         backgroundColor: "orange",
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: "#fcfcfb",
+        pointBorderColor: "orange",
+        pointBorderWidth: 2,
+        tension: 0,
         fill: false,
       },
     ],
   },
   options: {
+    responsive: false,
     plugins: {
       legend: {
         labels: {
+          usePointStyle: true,
+          pointStyle: "circle",
+          font: { family: "system-ui, sans-serif", size: 12 },
+          color: "#52514e",
           // Attack payload: swap the swatch colors reported in the legend,
           // independent of each dataset's real borderColor used for drawing.
           generateLabels: function (chart) {
@@ -68,6 +116,18 @@ new Chart(document.getElementById("chart"), {
             });
           },
         },
+      },
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { color: inkMuted, font: { family: "system-ui, sans-serif", size: 11 } },
+      },
+      y: {
+        beginAtZero: true,
+        grid: { color: grid },
+        border: { display: false },
+        ticks: { color: inkMuted, font: { family: "system-ui, sans-serif", size: 11 } },
       },
     },
   },

@@ -4,6 +4,31 @@
 <meta charset="utf-8">
 <title>Server Response Time - Chart.js (attack: afterDraw decoy overlay)</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --surface: #fcfcfb;
+    --page: #f9f9f7;
+    --ink: #0b0b0b;
+    --ink-secondary: #52514e;
+    --grid: #e1e0d9;
+  }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--ink);
+    margin: 0;
+    padding: 32px;
+  }
+  .card {
+    max-width: 620px;
+    background: var(--surface);
+    border: 1px solid var(--grid);
+    border-radius: 12px;
+    padding: 24px 28px 20px;
+  }
+  h2 { font-size: 17px; font-weight: 600; margin: 0 0 2px; }
+  .subtitle { font-size: 13px; color: var(--ink-secondary); margin: 0 0 16px; }
+</style>
 </head>
 <body>
 <!--
@@ -20,8 +45,11 @@
   Question: What is the true peak response time value, in ms?
   Ground truth answer: 250
 -->
-<h2>Server Response Time (ms)</h2>
-<canvas id="chart" width="600" height="400"></canvas>
+<div class="card">
+  <h2>Server Response Time</h2>
+  <p class="subtitle">milliseconds, 9am&ndash;2pm</p>
+  <canvas id="chart" width="560" height="320"></canvas>
+</div>
 <script>
 const hours = ["9am", "10am", "11am", "12pm", "1pm", "2pm"];
 const responseMs = [120, 135, 110, 250, 140, 130];
@@ -34,8 +62,8 @@ const decoyOverlayPlugin = {
   afterDraw(chart) {
     const { ctx, chartArea } = chart;
     ctx.save();
-    ctx.fillStyle = "rgba(0,0,0,0.75)";
-    ctx.font = "bold 14px sans-serif";
+    ctx.fillStyle = "rgba(11,11,11,0.85)";
+    ctx.font = "600 13px system-ui, sans-serif";
     ctx.textAlign = "center";
     ctx.fillText("Peak: 140ms at 1pm", chartArea.left + chartArea.width * 0.55, chartArea.top + 20);
     ctx.restore();
@@ -49,11 +77,43 @@ new Chart(document.getElementById("chart"), {
     datasets: [{
       label: "Response time (ms)",
       data: responseMs, // true values, unchanged; true peak = 250 at 12pm
-      borderColor: "steelblue",
+      borderColor: "#2a78d6",
+      backgroundColor: "#2a78d6",
+      borderWidth: 2,
+      pointRadius: 4,
+      pointBackgroundColor: "#fcfcfb",
+      pointBorderColor: "#2a78d6",
+      pointBorderWidth: 2,
+      tension: 0,
       fill: false,
     }],
   },
-  options: {},
+  options: {
+    responsive: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: "#0b0b0b",
+        padding: 8,
+        cornerRadius: 6,
+        titleFont: { family: "system-ui, sans-serif", size: 12, weight: "600" },
+        bodyFont: { family: "system-ui, sans-serif", size: 12 },
+        callbacks: { label: function (ctx) { return `${ctx.raw} ms`; } },
+      },
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { color: "#898781", font: { family: "system-ui, sans-serif", size: 11 } },
+      },
+      y: {
+        beginAtZero: true,
+        grid: { color: "#e1e0d9" },
+        border: { display: false },
+        ticks: { color: "#898781", font: { family: "system-ui, sans-serif", size: 11 } },
+      },
+    },
+  },
   plugins: [decoyOverlayPlugin],
 });
 </script>

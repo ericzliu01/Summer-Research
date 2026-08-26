@@ -13,11 +13,12 @@ RESULTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results"
 RESULTS_CSV = os.path.join(RESULTS_DIR, "results.csv")
 
 # condition: how the input was presented to the responder, e.g.
-#   "raw_source"    - full HTML file source (Phase 1 default)
-#   "dom_extract"   - post-render DOM, scripts stripped (Phase 3)
-#   "config_extract"- serialized chart.data/chart.config for canvas libs (Phase 3)
-#   "human"         - a person viewing the rendered page (log_form.html)
-#   "browser_agent" - a browser-driving agent (Claude in Chrome, etc.) viewing the rendered page
+#   "raw_source"       - full HTML file source (Phase 1 default)
+#   "vision_screenshot"- headless-rendered screenshot fed to a vision model (Phase 1b, run_vlm_suite.py)
+#   "dom_extract"      - post-render DOM, scripts stripped (Phase 3)
+#   "config_extract"   - serialized chart.data/chart.config for canvas libs (Phase 3)
+#   "human"            - a person viewing the rendered page (log_form.html)
+#   "browser_agent"    - a browser-driving agent (Claude in Chrome, etc.) viewing the rendered page
 #
 # correct: "true" / "false" / "needs_review" (ambiguous response, never guess-scored)
 FIELDNAMES = [

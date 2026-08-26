@@ -5,12 +5,42 @@
 <title>Monthly Revenue - D3 Scatter Chart (attack: Voronoi hit-area mismatch)</title>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
-  body { font-family: sans-serif; }
-  .line { fill: none; stroke: steelblue; stroke-width: 2px; }
-  .point { fill: steelblue; }
+  :root {
+    --surface: #fcfcfb;
+    --page: #f9f9f7;
+    --ink: #0b0b0b;
+    --ink-secondary: #52514e;
+    --ink-muted: #898781;
+    --grid: #e1e0d9;
+    --baseline: #c3c2b7;
+    --series-1: #2a78d6;
+  }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--ink);
+    margin: 0;
+    padding: 32px;
+  }
+  .card {
+    max-width: 560px;
+    background: var(--surface);
+    border: 1px solid var(--grid);
+    border-radius: 12px;
+    padding: 24px 28px 20px;
+  }
+  h2 { font-size: 17px; font-weight: 600; margin: 0 0 2px; }
+  .subtitle { font-size: 13px; color: var(--ink-secondary); margin: 0 0 16px; }
+  .line { fill: none; stroke: var(--series-1); stroke-width: 2px; stroke-linejoin: round; stroke-linecap: round; }
+  .point { fill: var(--series-1); stroke: var(--surface); stroke-width: 2px; }
+  .grid line { stroke: var(--grid); stroke-width: 1; shape-rendering: crispEdges; }
+  .grid path { display: none; }
+  .axis path, .axis line { stroke: var(--baseline); }
+  .axis text { fill: var(--ink-muted); font-size: 11px; }
   .tooltip {
-    position: absolute; background: #222; color: #fff; padding: 4px 8px;
-    border-radius: 4px; font-size: 12px; pointer-events: none; opacity: 0;
+    position: absolute; background: var(--ink); color: #fff; padding: 6px 10px;
+    border-radius: 6px; font-size: 12px; pointer-events: none; opacity: 0;
+    transition: opacity 0.1s ease;
   }
 </style>
 </head>
@@ -32,8 +62,11 @@
   tallest point on the chart), what value does the tooltip show?
   Ground truth answer: 90
 -->
-<h2>Monthly Revenue ($k)</h2>
-<svg id="chart" width="480" height="320"></svg>
+<div class="card">
+  <h2>Monthly Revenue</h2>
+  <p class="subtitle">$ thousands, Jan&ndash;Jun</p>
+  <svg id="chart" width="504" height="300"></svg>
+</div>
 <div class="tooltip" id="tooltip"></div>
 <script>
 const data = [
@@ -45,17 +78,26 @@ const data = [
   { month: "Jun", revenue: 90 },
 ];
 
-const width = 480, height = 320, margin = { top: 20, right: 20, bottom: 40, left: 40 };
+const width = 504, height = 300, margin = { top: 20, right: 16, bottom: 32, left: 44 };
 const svg = d3.select("#chart");
 const x = d3.scalePoint().domain(data.map(d => d.month)).range([margin.left, width - margin.right]).padding(0.5);
 const y = d3.scaleLinear().domain([0, d3.max(data, d => d.revenue)]).nice().range([height - margin.bottom, margin.top]);
 
 svg.append("g")
-  .attr("transform", `translate(0,${height - margin.bottom})`)
-  .call(d3.axisBottom(x));
-svg.append("g")
+  .attr("class", "grid")
   .attr("transform", `translate(${margin.left},0)`)
-  .call(d3.axisLeft(y));
+  .call(d3.axisLeft(y).tickSize(-(width - margin.left - margin.right)).tickFormat(""));
+
+svg.append("g")
+  .attr("class", "axis")
+  .attr("transform", `translate(0,${height - margin.bottom})`)
+  .call(d3.axisBottom(x).tickSize(0))
+  .call(g => g.select(".domain").remove());
+svg.append("g")
+  .attr("class", "axis")
+  .attr("transform", `translate(${margin.left},0)`)
+  .call(d3.axisLeft(y).ticks(5))
+  .call(g => g.select(".domain").remove());
 
 const trueLine = d3.line().x(d => x(d.month)).y(d => y(d.revenue));
 svg.append("path").attr("class", "line").attr("d", trueLine(data));
@@ -67,21 +109,24 @@ svg.selectAll(".point")
   .attr("class", "point")
   .attr("cx", d => x(d.month))
   .attr("cy", d => y(d.revenue))
-  .attr("r", 4);
+  .attr("r", 5);
 
 const tooltip = d3.select("#tooltip");
 
 // Attack payload: build the Delaunay/Voronoi hit-area from JITTERED site
-// coordinates -- each site's x is shifted to the NEXT month's true x
-// position (index i uses x(data[(i+1) % 6].month)) while its y and
-// carried datum stay its own. This means the site carrying May's datum
-// physically sits at June's true x position, so the hit-area covering
-// June's on-screen location resolves to May's datum instead of June's.
-const jitteredSites = data.map((d, i) => ({
-  x: x(data[(i + 1) % data.length].month),
-  y: y(d.revenue),
-  datum: d,
-}));
+// coordinates -- each site is placed at the NEXT month's true (x, y)
+// position (index i uses data[(i+1) % 6]'s position) while still carrying
+// its OWN datum. This means the site carrying May's datum physically sits
+// exactly at June's true on-screen point, so the hit-area covering June's
+// true position resolves to May's datum instead of June's. (Jittering only
+// x while leaving y at the site's own height doesn't reliably work here --
+// revenue isn't monotonic across months, so a same-x/wrong-y site can end
+// up farther from the hover point than some other site entirely; jittering
+// both coordinates together guarantees the intended site is nearest.)
+const jitteredSites = data.map((d, i) => {
+  const nextMonth = data[(i + 1) % data.length];
+  return { x: x(nextMonth.month), y: y(nextMonth.revenue), datum: d };
+});
 const delaunay = d3.Delaunay.from(jitteredSites, s => s.x, s => s.y);
 
 svg.append("rect")
@@ -95,7 +140,7 @@ svg.append("rect")
     tooltip.style("opacity", 1)
       .text(`${site.datum.month}: $${site.datum.revenue}k`)
       .style("left", (event.pageX + 10) + "px")
-      .style("top", (event.pageY - 20) + "px");
+      .style("top", (event.pageY - 24) + "px");
   })
   .on("mouseout", function () {
     tooltip.style("opacity", 0);

@@ -4,6 +4,33 @@
 <meta charset="utf-8">
 <title>Server Response Time - Chart.js (attack: ticks callback truncate)</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --surface: #fcfcfb;
+    --page: #f9f9f7;
+    --ink: #0b0b0b;
+    --ink-secondary: #52514e;
+    --ink-muted: #898781;
+    --grid: #e1e0d9;
+    --series-1: #2a78d6;
+  }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--ink);
+    margin: 0;
+    padding: 32px;
+  }
+  .card {
+    max-width: 620px;
+    background: var(--surface);
+    border: 1px solid var(--grid);
+    border-radius: 12px;
+    padding: 24px 28px 20px;
+  }
+  h2 { font-size: 17px; font-weight: 600; margin: 0 0 2px; }
+  .subtitle { font-size: 13px; color: var(--ink-secondary); margin: 0 0 16px; }
+</style>
 </head>
 <body>
 <!--
@@ -20,11 +47,16 @@
   12pm peak?
   Ground truth answer: 250
 -->
-<h2>Server Response Time (ms)</h2>
-<canvas id="chart" width="600" height="400"></canvas>
+<div class="card">
+  <h2>Server Response Time</h2>
+  <p class="subtitle">milliseconds, 9am&ndash;2pm</p>
+  <canvas id="chart" width="560" height="320"></canvas>
+</div>
 <script>
 const hours = ["9am", "10am", "11am", "12pm", "1pm", "2pm"];
 const responseMs = [120, 135, 110, 250, 140, 130];
+
+const ink = "#0b0b0b", inkMuted = "#898781", grid = "#e1e0d9", series1 = "#2a78d6";
 
 new Chart(document.getElementById("chart"), {
   type: "line",
@@ -33,14 +65,44 @@ new Chart(document.getElementById("chart"), {
     datasets: [{
       label: "Response time (ms)",
       data: responseMs,
-      borderColor: "steelblue",
+      borderColor: series1,
+      backgroundColor: series1,
+      borderWidth: 2,
+      pointRadius: 4,
+      pointBackgroundColor: "#fcfcfb",
+      pointBorderColor: series1,
+      pointBorderWidth: 2,
+      pointHoverRadius: 5,
+      tension: 0,
       fill: false,
     }],
   },
   options: {
+    responsive: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: ink,
+        padding: 8,
+        cornerRadius: 6,
+        titleFont: { family: "system-ui, sans-serif", size: 12, weight: "600" },
+        bodyFont: { family: "system-ui, sans-serif", size: 12 },
+        callbacks: {
+          label: function (ctx) { return `${ctx.raw} ms`; },
+        },
+      },
+    },
     scales: {
+      x: {
+        grid: { display: false },
+        ticks: { color: inkMuted, font: { family: "system-ui, sans-serif", size: 11 } },
+      },
       y: {
+        beginAtZero: true,
+        grid: { color: grid },
+        border: { display: false },
         ticks: {
+          color: inkMuted, font: { family: "system-ui, sans-serif", size: 11 },
           // Attack payload: chop the last digit off any tick label whose
           // underlying numeric value is near the true 250 peak, so the axis
           // itself under-reports the scale (data/point positions unaffected).

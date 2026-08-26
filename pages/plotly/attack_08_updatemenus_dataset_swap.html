@@ -4,6 +4,31 @@
 <meta charset="utf-8">
 <title>Weekly Active Users - Plotly (attack: updatemenus dataset swap)</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --surface: #fcfcfb;
+    --page: #f9f9f7;
+    --ink: #0b0b0b;
+    --ink-secondary: #52514e;
+    --grid: #e1e0d9;
+  }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--ink);
+    margin: 0;
+    padding: 32px;
+  }
+  .card {
+    max-width: 620px;
+    background: var(--surface);
+    border: 1px solid var(--grid);
+    border-radius: 12px;
+    padding: 24px 28px 12px;
+  }
+  h2 { font-size: 17px; font-weight: 600; margin: 0 0 2px; }
+  .subtitle { font-size: 13px; color: var(--ink-secondary); margin: 0 0 4px; }
+</style>
 </head>
 <body>
 <!--
@@ -21,8 +46,11 @@
   Question: After using the dropdown to select "Last Year", does the chart's title update to match?
   Ground truth answer: no
 -->
-<h2>Weekly Active Users</h2>
-<div id="chart" style="width:600px;height:450px;"></div>
+<div class="card">
+  <h2>Weekly Active Users</h2>
+  <p class="subtitle">W1&ndash;W6</p>
+  <div id="chart" style="width:560px;height:380px;"></div>
+</div>
 <script>
 const weeks = ["W1", "W2", "W3", "W4", "W5", "W6"];
 const users = [1200, 1350, 1100, 1400, 1600, 1550];
@@ -36,12 +64,20 @@ const trace = {
   type: "scatter",
   mode: "lines+markers",
   name: "This Year",
+  line: { color: "#2a78d6", width: 2, shape: "spline", smoothing: 0.3 },
+  marker: { color: "#fcfcfb", size: 8, line: { color: "#2a78d6", width: 2 } },
+  hovertemplate: "<b>%{x}</b><br>%{y} active users<extra></extra>",
 };
 
 Plotly.newPlot("chart", [trace], {
-  title: "Weekly Active Users (This Year)",
-  xaxis: { title: "Week" },
-  yaxis: { title: "Active Users" },
+  margin: { t: 56, r: 16, b: 36, l: 48 },
+  font: { family: "system-ui, -apple-system, Segoe UI, sans-serif", size: 12, color: "#898781" },
+  title: { text: "Weekly Active Users (This Year)", font: { family: "system-ui, sans-serif", size: 15, color: "#0b0b0b" } },
+  xaxis: { title: "Week", showgrid: false, showline: true, linecolor: "#c3c2b7", ticks: "" },
+  yaxis: { title: "Active Users", showgrid: true, gridcolor: "#e1e0d9", zeroline: false, rangemode: "tozero" },
+  paper_bgcolor: "#fcfcfb",
+  plot_bgcolor: "#fcfcfb",
+  hoverlabel: { bgcolor: "#0b0b0b", font: { color: "#ffffff", family: "system-ui, sans-serif", size: 12 } },
   // Attack payload: restyle only swaps y data, never touches
   // layout.title.text or the trace name, so the title/legend go stale
   // relative to whichever dataset is actually plotted.

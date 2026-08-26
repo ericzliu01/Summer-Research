@@ -56,9 +56,18 @@ Answer with just the final answer (a short value, e.g. a number or a single word
 
 
 def discover_pages():
-    """Return (clean_by_library, attacks) where attacks is a list of dicts
-    with library, attack_id, html_path, question, ground_truth."""
+    """Return (clean_by_library, clean_by_attack, attacks).
+
+    clean_by_library: library -> entry for the library-wide clean.html.
+    clean_by_attack:  (library, attack_id) -> entry for a per-attack
+        companion clean page (file named <attack_id>__clean.html).  When
+        present, callers should prefer this over clean_by_library for that
+        attack's baseline, because the library-level clean.html may have an
+        incompatible chart structure.
+    attacks: list of attack entry dicts (excludes clean pages).
+    """
     clean_by_library = {}
+    clean_by_attack = {}
     attacks = []
     for library in sorted(os.listdir(PAGES_DIR)):
         lib_dir = os.path.join(PAGES_DIR, library)
@@ -82,9 +91,12 @@ def discover_pages():
             }
             if fname == "clean.html" or meta["attack_id"] == "clean":
                 clean_by_library[library] = entry
+            elif meta["attack_id"].endswith("__clean"):
+                real_attack_id = meta["attack_id"][: -len("__clean")]
+                clean_by_attack[(library, real_attack_id)] = entry
             else:
                 attacks.append(entry)
-    return clean_by_library, attacks
+    return clean_by_library, clean_by_attack, attacks
 
 
 def extract_numbers(text):
@@ -143,10 +155,10 @@ def call_ollama(model, prompt, timeout):
     return data.get("response", ""), latency_ms
 
 
-def already_done_keys():
+def already_done_keys(condition=CONDITION):
     keys = set()
     for row in read_rows():
-        if row.get("condition") == CONDITION and "request_error" not in row.get("notes", ""):
+        if row.get("condition") == condition and "request_error" not in row.get("notes", ""):
             keys.add((row["library"], row["attack_id"], row["question"], row["model"]))
     return keys
 
@@ -205,7 +217,7 @@ def main():
     models = [m.strip() for m in args.models.split(",") if m.strip()]
     libraries = {l.strip() for l in args.libraries.split(",") if l.strip()}
 
-    clean_by_library, attacks = discover_pages()
+    clean_by_library, clean_by_attack, attacks = discover_pages()
     attacks = [a for a in attacks if a["library"] in libraries]
     if args.limit is not None:
         capped = []
@@ -232,8 +244,8 @@ def main():
                 args.timeout, done_keys,
             )
 
-            # Clean baseline for this same question, so ASR is computable.
-            clean = clean_by_library.get(library)
+            # Per-attack companion clean preferred; fall back to library clean.
+            clean = clean_by_attack.get((library, attack["attack_id"])) or clean_by_library.get(library)
             if clean is not None:
                 run_trial(
                     library, f"{attack['attack_id']}__clean_baseline", clean["html_path"],

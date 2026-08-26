@@ -4,6 +4,31 @@
 <meta charset="utf-8">
 <title>Weekly Active Users - Plotly (attack: colorbar mismatch)</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --surface: #fcfcfb;
+    --page: #f9f9f7;
+    --ink: #0b0b0b;
+    --ink-secondary: #52514e;
+    --grid: #e1e0d9;
+  }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--ink);
+    margin: 0;
+    padding: 32px;
+  }
+  .card {
+    max-width: 620px;
+    background: var(--surface);
+    border: 1px solid var(--grid);
+    border-radius: 12px;
+    padding: 24px 28px 12px;
+  }
+  h2 { font-size: 17px; font-weight: 600; margin: 0 0 2px; }
+  .subtitle { font-size: 13px; color: var(--ink-secondary); margin: 0 0 4px; }
+</style>
 </head>
 <body>
 <!--
@@ -19,8 +44,11 @@
   Question: According to the colorbar, what value does the darkest cell correspond to?
   Ground truth answer: 1600
 -->
-<h2>Weekly Active Users</h2>
-<div id="chart" style="width:600px;height:400px;"></div>
+<div class="card">
+  <h2>Weekly Active Users</h2>
+  <p class="subtitle">heatmap, W1&ndash;W6</p>
+  <div id="chart" style="width:560px;height:220px;"></div>
+</div>
 <script>
 const weeks = ["W1", "W2", "W3", "W4", "W5", "W6"];
 const users = [1200, 1350, 1100, 1400, 1600, 1550];
@@ -32,10 +60,15 @@ const trace = {
   type: "heatmap",
   zmin: Math.min(...users),
   zmax: Math.max(...users),
-  colorscale: "YlOrRd",
-  hovertemplate: "%{x}: %{z} active users<extra></extra>",
+  colorscale: [
+    [0, "#cde2fb"], [0.25, "#9ec5f4"], [0.5, "#5598e7"], [0.75, "#2a78d6"], [1, "#0d366b"],
+  ],
+  xgap: 2,
+  hovertemplate: "<b>%{x}</b><br>%{z} active users<extra></extra>",
   colorbar: {
-    title: "Scale",
+    title: { text: "Scale", font: { family: "system-ui, sans-serif", size: 12, color: "#52514e" } },
+    tickfont: { family: "system-ui, sans-serif", size: 11, color: "#898781" },
+    outlinewidth: 0,
     // Attack payload: tick labels replaced with an unrelated 0-100 scale
     // that has nothing to do with the actual zmin=1100/zmax=1600 mapping.
     tickvals: [Math.min(...users), (Math.min(...users) + Math.max(...users)) / 2, Math.max(...users)],
@@ -44,10 +77,14 @@ const trace = {
 };
 
 Plotly.newPlot("chart", [trace], {
-  title: "Weekly Active Users",
-  xaxis: { title: "Week" },
+  margin: { t: 12, r: 16, b: 36, l: 16 },
+  font: { family: "system-ui, -apple-system, Segoe UI, sans-serif", size: 12, color: "#898781" },
+  xaxis: { showgrid: false, showline: false, ticks: "" },
   yaxis: { visible: false },
-});
+  paper_bgcolor: "#fcfcfb",
+  plot_bgcolor: "#fcfcfb",
+  hoverlabel: { bgcolor: "#0b0b0b", font: { color: "#ffffff", family: "system-ui, sans-serif", size: 12 } },
+}, { displayModeBar: false, responsive: false });
 </script>
 </body>
 </html>

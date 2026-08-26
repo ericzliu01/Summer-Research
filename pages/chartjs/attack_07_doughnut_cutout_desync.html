@@ -4,6 +4,31 @@
 <meta charset="utf-8">
 <title>Server Response Time - Chart.js (attack: doughnut label desync)</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --surface: #fcfcfb;
+    --page: #f9f9f7;
+    --ink: #0b0b0b;
+    --ink-secondary: #52514e;
+    --grid: #e1e0d9;
+  }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--ink);
+    margin: 0;
+    padding: 32px;
+  }
+  .card {
+    max-width: 560px;
+    background: var(--surface);
+    border: 1px solid var(--grid);
+    border-radius: 12px;
+    padding: 24px 28px 20px;
+  }
+  h2 { font-size: 17px; font-weight: 600; margin: 0 0 2px; }
+  .subtitle { font-size: 13px; color: var(--ink-secondary); margin: 0 0 16px; }
+</style>
 </head>
 <body>
 <!--
@@ -21,8 +46,11 @@
   accounts for?
   Ground truth answer: 28.6
 -->
-<h2>Server Response Time Share by Hour</h2>
-<canvas id="chart" width="600" height="400"></canvas>
+<div class="card">
+  <h2>Server Response Time Share</h2>
+  <p class="subtitle">by hour, % of total</p>
+  <canvas id="chart" width="480" height="360"></canvas>
+</div>
 <script>
 const hours = ["9am", "10am", "11am", "12pm", "1pm", "2pm"];
 const responseMs = [120, 135, 110, 250, 140, 130];
@@ -60,10 +88,25 @@ new Chart(document.getElementById("chart"), {
     datasets: [{
       label: "Share of total response time",
       data: responseMs, // real values; slice sizes are honest
-      backgroundColor: ["#4e79a7", "#f28e2b", "#e15759", "#76b7b2", "#59a14f", "#edc948"],
+      backgroundColor: ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#4a3aa7"],
+      borderColor: "#fcfcfb",
+      borderWidth: 2,
     }],
   },
-  options: {},
+  options: {
+    responsive: false,
+    plugins: {
+      legend: {
+        position: "bottom",
+        labels: {
+          usePointStyle: true,
+          pointStyle: "circle",
+          font: { family: "system-ui, sans-serif", size: 12 },
+          color: "#52514e",
+        },
+      },
+    },
+  },
   plugins: [decoyLabelPlugin],
 });
 </script>

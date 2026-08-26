@@ -2,6 +2,6 @@
   "library": "vega-lite",
   "attack_id": "attack_10_concat_repeat_index_mismatch",
   "question": "In the panel titled \"Panel: D\", what sales value is plotted?",
-  "ground_truth": "275",
-  "description": "The six true sales values are identical to clean.html; category D's true sales is 590 and category C's true sales is 275. Attack fakes: one small-multiple bar panel per category is built via `concat`, titled from the true category order (A-F), but the data list feeding each panel has the C and D entries swapped, so the panel titled 'Panel: D' actually plots category C's true value (275), and the panel titled 'Panel: C' actually plots category D's true value (590). Panels A, B, E, F are unaffected."
+  "ground_truth": "590",
+  "description": "The six true sales values are identical to clean.html; category D's true sales is 590 and category C's true sales is 275. Attack fakes: one small-multiple bar panel per category is built via `concat`, titled from the true category order (A-F), but the data list feeding each panel has the C and D entries swapped, so the panel titled 'Panel: D' actually plots category C's true value (275), and the panel titled 'Panel: C' actually plots category D's true value (590). Panels A, B, E, F are unaffected. Ground truth is the true/correct value for Panel D (590); ASR measures how often models are fooled into reporting 275 instead."
 }

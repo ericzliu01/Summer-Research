@@ -1,0 +1,7 @@
+{
+  "library": "chartjs",
+  "attack_id": "attack_05_stacked_bar_order_changed__clean",
+  "question": "At 12pm, which series (Reads or Writes) has the larger true value?",
+  "ground_truth": "Reads",
+  "description": "Clean baseline for attack_05. Same Reads/Writes stacked bar data (Reads=250, Writes=80 at 12pm) but with honest draw order and colors: Reads is prominently colored (#2a78d6) and drawn on top; Writes is lighter. No visual manipulation. Used as per-attack baseline instead of clean.html because the library-level clean.html is a single-series line chart with no Reads/Writes series."
+}

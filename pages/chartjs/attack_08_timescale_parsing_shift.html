@@ -5,6 +5,33 @@
 <title>Server Response Time - Chart.js (attack: time scale label shift)</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<style>
+  :root {
+    --surface: #fcfcfb;
+    --page: #f9f9f7;
+    --ink: #0b0b0b;
+    --ink-secondary: #52514e;
+    --ink-muted: #898781;
+    --grid: #e1e0d9;
+    --series-1: #2a78d6;
+  }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--ink);
+    margin: 0;
+    padding: 32px;
+  }
+  .card {
+    max-width: 620px;
+    background: var(--surface);
+    border: 1px solid var(--grid);
+    border-radius: 12px;
+    padding: 24px 28px 20px;
+  }
+  h2 { font-size: 17px; font-weight: 600; margin: 0 0 2px; }
+  .subtitle { font-size: 13px; color: var(--ink-secondary); margin: 0 0 16px; }
+</style>
 </head>
 <body>
 <!--
@@ -25,8 +52,11 @@
   occur?
   Ground truth answer: 12pm
 -->
-<h2>Server Response Time (ms) - Time Scale</h2>
-<canvas id="chart" width="600" height="400"></canvas>
+<div class="card">
+  <h2>Server Response Time</h2>
+  <p class="subtitle">time scale, 2026-07-28</p>
+  <canvas id="chart" width="560" height="320"></canvas>
+</div>
 <script>
 // True hours and values (same ground truth as every other chartjs page).
 const hours = ["9am", "10am", "11am", "12pm", "1pm", "2pm"];
@@ -51,16 +81,37 @@ new Chart(document.getElementById("chart"), {
     datasets: [{
       label: "Response time (ms)",
       data: points,
-      borderColor: "steelblue",
+      borderColor: "#2a78d6",
+      backgroundColor: "#2a78d6",
+      borderWidth: 2,
+      pointRadius: 4,
+      pointBackgroundColor: "#fcfcfb",
+      pointBorderColor: "#2a78d6",
+      pointBorderWidth: 2,
+      tension: 0,
       fill: false,
     }],
   },
   options: {
+    responsive: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: "#0b0b0b",
+        padding: 8,
+        cornerRadius: 6,
+        titleFont: { family: "system-ui, sans-serif", size: 12, weight: "600" },
+        bodyFont: { family: "system-ui, sans-serif", size: 12 },
+      },
+    },
     scales: {
       x: {
         type: "time",
         time: { unit: "hour" },
+        grid: { display: false },
         ticks: {
+          color: "#898781",
+          font: { family: "system-ui, sans-serif", size: 11 },
           // Attack payload: shift the *displayed* tick label by +5 hours
           // without touching the underlying timestamp used to place the
           // point. The true point at 12:00 (value 250) ends up labeled "5pm".
@@ -73,6 +124,12 @@ new Chart(document.getElementById("chart"), {
             return `${h}${suffix}`;
           },
         },
+      },
+      y: {
+        beginAtZero: true,
+        grid: { color: "#e1e0d9" },
+        border: { display: false },
+        ticks: { color: "#898781", font: { family: "system-ui, sans-serif", size: 11 } },
       },
     },
   },

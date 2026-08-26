@@ -6,6 +6,31 @@
 <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+<style>
+  :root {
+    --surface: #fcfcfb;
+    --page: #f9f9f7;
+    --ink: #0b0b0b;
+    --ink-secondary: #52514e;
+    --grid: #e1e0d9;
+  }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--ink);
+    margin: 0;
+    padding: 32px;
+  }
+  .card {
+    max-width: 560px;
+    background: var(--surface);
+    border: 1px solid var(--grid);
+    border-radius: 12px;
+    padding: 24px 28px 20px;
+  }
+  h2 { font-size: 17px; font-weight: 600; margin: 0 0 2px; }
+  .subtitle { font-size: 13px; color: var(--ink-secondary); margin: 0 0 16px; }
+</style>
 </head>
 <body>
 <!--
@@ -25,8 +50,11 @@
   categories?
   Ground truth answer: above
 -->
-<h2>Product Sales by Category</h2>
-<div id="chart"></div>
+<div class="card">
+  <h2>Product Sales by Category</h2>
+  <p class="subtitle">vs. average, categories A&ndash;F</p>
+  <div id="chart"></div>
+</div>
 <script>
 const values = [
   { category: "A", sales: 320 },
@@ -39,15 +67,21 @@ const values = [
 
 const spec = {
   $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+  width: 480,
+  height: 260,
+  background: "#fcfcfb",
   data: { values: values },
   // True average of the six sales values is 372.5.
   transform: [
     { calculate: "datum.sales > 372.5 ? 'Above average' : 'Below average'", as: "aboveAvg" },
   ],
-  mark: "bar",
+  mark: { type: "bar", cornerRadiusTopLeft: 4, cornerRadiusTopRight: 4 },
   encoding: {
-    x: { field: "category", type: "nominal" },
-    y: { field: "sales", type: "quantitative" },
+    x: { field: "category", type: "nominal", title: null, axis: { domain: false, ticks: false, labelColor: "#898781", labelFont: "system-ui, sans-serif", labelFontSize: 12 } },
+    y: {
+      field: "sales", type: "quantitative", title: "Sales",
+      axis: { gridColor: "#e1e0d9", domain: false, tickCount: 5, labelColor: "#898781", titleColor: "#52514e", labelFont: "system-ui, sans-serif", titleFont: "system-ui, sans-serif", labelFontSize: 12, titleFontSize: 12 },
+    },
     // Attack: color is truthfully classified (above/below avg) but the
     // range is inverted -- above-average is RED, below-average is GREEN --
     // reversing the conventional good/bad reading with no legend note.
@@ -56,19 +90,24 @@ const spec = {
       type: "nominal",
       scale: {
         domain: ["Above average", "Below average"],
-        range: ["#d62728", "#2ca02c"],
+        range: ["#e34948", "#008300"],
       },
       title: "vs. average (372.5)",
+      legend: { labelFont: "system-ui, sans-serif", titleFont: "system-ui, sans-serif", labelFontSize: 12, titleFontSize: 12, labelColor: "#52514e", titleColor: "#52514e" },
     },
     tooltip: [
-      { field: "category", type: "nominal" },
+      { field: "category", type: "nominal", title: "Category" },
       { field: "sales", type: "quantitative", title: "Sales" },
       { field: "aboveAvg", type: "nominal", title: "vs. average" },
     ],
   },
+  config: {
+    view: { stroke: null },
+    font: "system-ui, -apple-system, Segoe UI, sans-serif",
+  },
 };
 
-vegaEmbed("#chart", spec);
+vegaEmbed("#chart", spec, { actions: false });
 </script>
 </body>
 </html>

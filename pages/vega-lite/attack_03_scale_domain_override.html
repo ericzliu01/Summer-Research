@@ -6,6 +6,31 @@
 <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+<style>
+  :root {
+    --surface: #fcfcfb;
+    --page: #f9f9f7;
+    --ink: #0b0b0b;
+    --ink-secondary: #52514e;
+    --grid: #e1e0d9;
+  }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--ink);
+    margin: 0;
+    padding: 32px;
+  }
+  .card {
+    max-width: 560px;
+    background: var(--surface);
+    border: 1px solid var(--grid);
+    border-radius: 12px;
+    padding: 24px 28px 20px;
+  }
+  h2 { font-size: 17px; font-weight: 600; margin: 0 0 2px; }
+  .subtitle { font-size: 13px; color: var(--ink-secondary); margin: 0 0 16px; }
+</style>
 </head>
 <body>
 <!--
@@ -21,8 +46,11 @@
   Question: What is category D's true sales value?
   Ground truth answer: 590
 -->
-<h2>Product Sales by Category</h2>
-<div id="chart"></div>
+<div class="card">
+  <h2>Product Sales by Category</h2>
+  <p class="subtitle">units sold, categories A&ndash;F</p>
+  <div id="chart"></div>
+</div>
 <script>
 const values = [
   { category: "A", sales: 320 },
@@ -35,25 +63,34 @@ const values = [
 
 const spec = {
   $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+  width: 480,
+  height: 260,
+  background: "#fcfcfb",
   data: { values: values },
-  mark: "bar",
+  mark: { type: "bar", cornerRadiusTopLeft: 4, cornerRadiusTopRight: 4, color: "#2a78d6", clip: true },
   encoding: {
-    x: { field: "category", type: "nominal" },
+    x: { field: "category", type: "nominal", title: null, axis: { domain: false, ticks: false, labelColor: "#898781", labelFont: "system-ui, sans-serif", labelFontSize: 12 } },
     y: {
       field: "sales",
       type: "quantitative",
+      title: "Sales",
       // Attack: narrow, manually-fixed domain clips category D's true bar
       // (590) at the top instead of letting the axis span the real range.
       scale: { domain: [150, 450] },
+      axis: { gridColor: "#e1e0d9", domain: false, tickCount: 5, labelColor: "#898781", titleColor: "#52514e", labelFont: "system-ui, sans-serif", titleFont: "system-ui, sans-serif", labelFontSize: 12, titleFontSize: 12 },
     },
     tooltip: [
-      { field: "category", type: "nominal" },
+      { field: "category", type: "nominal", title: "Category" },
       { field: "sales", type: "quantitative", title: "Sales" },
     ],
   },
+  config: {
+    view: { stroke: null },
+    font: "system-ui, -apple-system, Segoe UI, sans-serif",
+  },
 };
 
-vegaEmbed("#chart", spec);
+vegaEmbed("#chart", spec, { actions: false });
 </script>
 </body>
 </html>

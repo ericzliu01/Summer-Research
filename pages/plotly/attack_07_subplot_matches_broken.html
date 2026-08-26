@@ -4,6 +4,31 @@
 <meta charset="utf-8">
 <title>Weekly Active Users - Plotly (attack: subplot alignment broken)</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --surface: #fcfcfb;
+    --page: #f9f9f7;
+    --ink: #0b0b0b;
+    --ink-secondary: #52514e;
+    --grid: #e1e0d9;
+  }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--ink);
+    margin: 0;
+    padding: 32px;
+  }
+  .card {
+    max-width: 720px;
+    background: var(--surface);
+    border: 1px solid var(--grid);
+    border-radius: 12px;
+    padding: 24px 28px 12px;
+  }
+  h2 { font-size: 17px; font-weight: 600; margin: 0 0 2px; }
+  .subtitle { font-size: 13px; color: var(--ink-secondary); margin: 0 0 4px; }
+</style>
 </head>
 <body>
 <!--
@@ -23,8 +48,11 @@
   Question: In the (intended-to-be-aligned) second subplot, what value appears directly below the first subplot's W4 marker?
   Ground truth answer: 1400
 -->
-<h2>Weekly Active Users</h2>
-<div id="chart" style="width:700px;height:400px;"></div>
+<div class="card">
+  <h2>Weekly Active Users</h2>
+  <p class="subtitle">raw vs. 3-week avg</p>
+  <div id="chart" style="width:660px;height:340px;"></div>
+</div>
 <script>
 const weeks = ["W1", "W2", "W3", "W4", "W5", "W6"];
 const users = [1200, 1350, 1100, 1400, 1600, 1550];
@@ -45,6 +73,9 @@ const trace1 = {
   type: "scatter",
   mode: "lines+markers",
   name: "Active Users",
+  line: { color: "#2a78d6", width: 2, shape: "spline", smoothing: 0.3 },
+  marker: { color: "#fcfcfb", size: 8, line: { color: "#2a78d6", width: 2 } },
+  hovertemplate: "<b>%{x}</b><br>%{y} active users<extra></extra>",
   xaxis: "x",
   yaxis: "y",
 };
@@ -60,18 +91,26 @@ const trace2 = {
   type: "scatter",
   mode: "lines+markers",
   name: "3-Week Avg",
+  line: { color: "#eb6834", width: 2, shape: "spline", smoothing: 0.3 },
+  marker: { color: "#fcfcfb", size: 8, line: { color: "#eb6834", width: 2 } },
+  hovertemplate: "<b>%{x}</b><br>%{y} (3wk avg)<extra></extra>",
   xaxis: "x2",
   yaxis: "y2",
 };
 
 Plotly.newPlot("chart", [trace1, trace2], {
-  title: "Weekly Active Users (raw vs. 3-week avg)",
+  margin: { t: 12, r: 16, b: 36, l: 48 },
+  font: { family: "system-ui, -apple-system, Segoe UI, sans-serif", size: 12, color: "#898781" },
   grid: { rows: 1, columns: 2, pattern: "independent" },
-  xaxis: { title: "Week", domain: [0, 0.45] },
-  yaxis: { title: "Active Users" },
-  xaxis2: { title: "Week", domain: [0.55, 1] },
-  yaxis2: { title: "Active Users (3wk avg)" },
-});
+  showlegend: false,
+  xaxis: { title: "Week", domain: [0, 0.45], showgrid: false, showline: true, linecolor: "#c3c2b7", ticks: "" },
+  yaxis: { title: "Active Users", showgrid: true, gridcolor: "#e1e0d9", zeroline: false, rangemode: "tozero" },
+  xaxis2: { title: "Week", domain: [0.55, 1], showgrid: false, showline: true, linecolor: "#c3c2b7", ticks: "" },
+  yaxis2: { title: "Active Users (3wk avg)", showgrid: true, gridcolor: "#e1e0d9", zeroline: false, rangemode: "tozero" },
+  paper_bgcolor: "#fcfcfb",
+  plot_bgcolor: "#fcfcfb",
+  hoverlabel: { bgcolor: "#0b0b0b", font: { color: "#ffffff", family: "system-ui, sans-serif", size: 12 } },
+}, { displayModeBar: false, responsive: false });
 </script>
 </body>
 </html>
