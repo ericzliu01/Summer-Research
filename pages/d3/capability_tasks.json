@@ -1,0 +1,53 @@
+[
+  {
+    "task_id": "find_anomalies",
+    "task_category": "Find Anomalies",
+    "tier": 1,
+    "question": "Which month's revenue is unusually high compared to the other five months?",
+    "ground_truth": "Jun"
+  },
+  {
+    "task_id": "find_extremum",
+    "task_category": "Find Extremum",
+    "tier": 2,
+    "question": "Which month had the lowest revenue?",
+    "ground_truth": "Mar"
+  },
+  {
+    "task_id": "filter",
+    "task_category": "Filter",
+    "tier": 2,
+    "question": "How many months had revenue above $50k?",
+    "ground_truth": "3"
+  },
+  {
+    "task_id": "determine_range",
+    "task_category": "Determine Range",
+    "tier": 2,
+    "question": "What is the range (max minus min) of monthly revenue, in $k?",
+    "ground_truth": "52"
+  },
+  {
+    "task_id": "sort",
+    "task_category": "Sort",
+    "tier": 3,
+    "question": "Which ordering correctly ranks the months from highest to lowest revenue? (A) Jun, Apr, Feb, May, Jan, Mar (B) Jun, May, Apr, Feb, Mar, Jan (C) Apr, Jun, Feb, May, Jan, Mar. Answer with just the letter.",
+    "ground_truth": "A",
+    "answer_type": "choice"
+  },
+  {
+    "task_id": "compute_derived_value",
+    "task_category": "Compute Derived Value",
+    "tier": 3,
+    "question": "What is the total revenue across all six months, in $k?",
+    "ground_truth": "333"
+  },
+  {
+    "task_id": "characterize_distribution",
+    "task_category": "Characterize Distribution",
+    "tier": 3,
+    "question": "Which best describes the monthly revenue trend? (A) mostly flat (B) gradually increasing (C) one large spike above an otherwise flat baseline. Answer with just the letter.",
+    "ground_truth": "C",
+    "answer_type": "choice"
+  }
+]
