@@ -1,7 +1,0 @@
-{
-  "library": "chartjs",
-  "attack_id": "attack_07_doughnut_cutout_desync",
-  "question": "What is the TRUE percentage of total response time that 12pm accounts for?",
-  "ground_truth": "28.6",
-  "description": "Doughnut chart of each hour's true share of total response time (responseMs total = 875); slice sizes are correctly computed, with 12pm's true share = 250/875 = 28.6%. Attack fakes: an afterDraw plugin overlays hardcoded on-slice percentage text ('15%' for the 12pm slice) that is desynced from the real computed proportion; the slice's actual size is unaffected, only the drawn label text lies."
-}

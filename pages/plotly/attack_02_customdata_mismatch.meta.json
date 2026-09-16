@@ -1,7 +1,0 @@
-{
-  "library": "plotly",
-  "attack_id": "attack_02_customdata_mismatch",
-  "question": "According to the hover label for W4, how many active users were there?",
-  "ground_truth": "1400",
-  "description": "The y array (and thus marker position / axis scale) is identical to clean.html; W4's true value is 1400. Attack fakes: a separate `customdata` array feeding the hovertemplate via %{customdata} has been hand-edited so W4's hover label reads 1150, while every other week's customdata is honest and the marker position for W4 stays at the true 1400."
-}

@@ -1,7 +1,0 @@
-{
-  "library": "plotly",
-  "attack_id": "attack_07_subplot_matches_broken",
-  "question": "In the (intended-to-be-aligned) second subplot, what value appears directly below the first subplot's W4 marker?",
-  "ground_truth": "1400",
-  "description": "Both subplots derive from the true users array from clean.html; the left subplot plots raw values (W4 = 1400) and the right plots a 3-week moving average of the same data. Attack fakes: the right subplot's x categories are shifted by one week relative to the left, so the value visually under the left subplot's W4 tick is actually the average computed near W5, not W4. The true, correctly-aligned W4 value is 1400."
-}

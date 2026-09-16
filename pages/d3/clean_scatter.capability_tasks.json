@@ -1,0 +1,61 @@
+[
+  {
+    "task_id": "find_anomalies",
+    "task_category": "Find Anomalies",
+    "tier": 1,
+    "question": "At which ad spend level are Campaign A and Campaign B's signup counts closest to each other, breaking the general pattern of one substantially exceeding the other?",
+    "ground_truth": "25"
+  },
+  {
+    "task_id": "find_extremum",
+    "task_category": "Find Extremum",
+    "tier": 2,
+    "question": "At which ad spend level does Campaign B reach its lowest signups?",
+    "ground_truth": "35"
+  },
+  {
+    "task_id": "filter",
+    "task_category": "Filter",
+    "tier": 2,
+    "question": "At how many ad spend levels does Campaign A have more signups than Campaign B?",
+    "ground_truth": "2"
+  },
+  {
+    "task_id": "determine_range",
+    "task_category": "Determine Range",
+    "tier": 2,
+    "question": "What is the range (max minus min) of Campaign A's signups across all ad spend levels?",
+    "ground_truth": "190"
+  },
+  {
+    "task_id": "sort",
+    "task_category": "Sort",
+    "tier": 3,
+    "question": "Which ordering correctly ranks the ad spend levels by Campaign A's signups, highest to lowest? (A) 35, 30, 25, 20, 15, 10 (B) 30, 35, 20, 25, 10, 15 (C) 35, 30, 20, 25, 15, 10. Answer with just the letter.",
+    "ground_truth": "A",
+    "answer_type": "choice"
+  },
+  {
+    "task_id": "compute_derived_value",
+    "task_category": "Compute Derived Value",
+    "tier": 3,
+    "question": "What is the total combined signups (Campaign A plus Campaign B) at an ad spend of 20?",
+    "ground_truth": "470"
+  },
+  {
+    "task_id": "characterize_distribution",
+    "task_category": "Characterize Distribution",
+    "tier": 3,
+    "question": "Which best describes how Campaign A's signups change as ad spend increases? (A) stays roughly flat regardless of spend (B) increases steadily as spend increases (C) increases then sharply drops at the highest spend level. Answer with just the letter.",
+    "ground_truth": "B",
+    "answer_type": "choice"
+  },
+  {
+    "task_id": "correlate",
+    "task_category": "Correlate",
+    "tier": 3,
+    "question": "How does ad spend relate to signups for each campaign? (A) Both campaigns show a positive correlation with spend (B) Campaign A shows a positive correlation with spend while Campaign B shows a negative correlation (C) Neither campaign's signups relate to spend in a consistent way. Answer with just the letter.",
+    "ground_truth": "B",
+    "answer_type": "choice"
+  }
+]

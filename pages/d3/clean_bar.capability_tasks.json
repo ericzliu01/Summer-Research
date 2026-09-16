@@ -1,0 +1,53 @@
+[
+  {
+    "task_id": "find_anomalies",
+    "task_category": "Find Anomalies",
+    "tier": 1,
+    "question": "Which region's signups are unusually high compared to the other four regions?",
+    "ground_truth": "West"
+  },
+  {
+    "task_id": "find_extremum",
+    "task_category": "Find Extremum",
+    "tier": 2,
+    "question": "Which region had the fewest signups?",
+    "ground_truth": "East"
+  },
+  {
+    "task_id": "filter",
+    "task_category": "Filter",
+    "tier": 2,
+    "question": "How many regions had more than 200 signups?",
+    "ground_truth": "3"
+  },
+  {
+    "task_id": "determine_range",
+    "task_category": "Determine Range",
+    "tier": 2,
+    "question": "What is the range (max minus min) of signups across the five regions?",
+    "ground_truth": "155"
+  },
+  {
+    "task_id": "sort",
+    "task_category": "Sort",
+    "tier": 3,
+    "question": "Which ordering correctly ranks the regions from highest to lowest signups? (A) West, South, Central, North, East (B) South, West, Central, East, North (C) West, Central, South, North, East. Answer with just the letter.",
+    "ground_truth": "A",
+    "answer_type": "choice"
+  },
+  {
+    "task_id": "compute_derived_value",
+    "task_category": "Compute Derived Value",
+    "tier": 3,
+    "question": "What is the total signups across all five regions?",
+    "ground_truth": "1090"
+  },
+  {
+    "task_id": "characterize_distribution",
+    "task_category": "Characterize Distribution",
+    "tier": 3,
+    "question": "Which best describes the signups distribution across regions? (A) mostly flat (B) gradually increasing (C) one region well above an otherwise moderate spread. Answer with just the letter.",
+    "ground_truth": "C",
+    "answer_type": "choice"
+  }
+]

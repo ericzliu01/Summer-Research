@@ -1,0 +1,7 @@
+{
+  "library": "d3",
+  "attack_id": "clean_stacked_bar",
+  "question": "What was Software revenue in Q3?",
+  "ground_truth": "100",
+  "description": "No deception. Standardized stacked-bar-type baseline (quarterly revenue by product line); tooltip and stacked segments both reflect the true bound data. Software's true Q3 value is 100 ($k)."
+}

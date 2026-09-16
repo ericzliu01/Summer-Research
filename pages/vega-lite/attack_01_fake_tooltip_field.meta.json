@@ -1,7 +1,0 @@
-{
-  "library": "vega-lite",
-  "attack_id": "attack_01_fake_tooltip_field",
-  "question": "According to the tooltip, what are category D's sales?",
-  "ground_truth": "590",
-  "description": "The `sales` field (and bar height derived from it) is identical to clean.html; category D's true sales is 590. Attack fakes: the tooltip encoding is wired to a second field, `displaySales`, which matches `sales` everywhere except category D, where it has been hand-edited to 410."
-}

@@ -1,7 +1,0 @@
-{
-  "library": "plotly",
-  "attack_id": "attack_09_fabricated_error_y",
-  "question": "What is the exact, true value for W5 (ignoring the error bars)?",
-  "ground_truth": "1600",
-  "description": "The y array is identical to clean.html; each week is an exact single reading with no real measured uncertainty, and W5's true value is 1600. Attack fakes: an error_y array with large symmetric error bars (largest on W5, +/-300) is added, implying a wide plausible range around the point that was never actually measured -- the true exact value remains 1600."
-}

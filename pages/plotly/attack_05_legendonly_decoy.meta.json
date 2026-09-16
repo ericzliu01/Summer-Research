@@ -1,7 +1,0 @@
-{
-  "library": "plotly",
-  "attack_id": "attack_05_legendonly_decoy",
-  "question": "According to the chart as initially displayed, what is the value for W4?",
-  "ground_truth": "1400",
-  "description": "The true trace (users array identical to clean.html, W4 = 1400) is present but set to visible: 'legendonly', hiding it from the plot by default. Attack fakes: a decoy trace with fabricated lower values (W4 = 900) is fully visible and shares the same legend name 'Active Users', so as initially displayed the chart only shows the false 900 figure while the true 1400 is hidden behind the legend toggle."
-}

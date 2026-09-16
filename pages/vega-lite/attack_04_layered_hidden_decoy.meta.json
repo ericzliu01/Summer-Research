@@ -1,7 +1,0 @@
-{
-  "library": "vega-lite",
-  "attack_id": "attack_04_layered_hidden_decoy",
-  "question": "What is category D's sales, according to the visible bar?",
-  "ground_truth": "590",
-  "description": "True sales values match clean.html; category D's true sales is 590. Attack fakes: a `layer` spec with a bottom layer holding the TRUE values at opacity 0 (invisible but present in markup) and a visible top layer showing a decoy dataset identical to the truth except category D is altered to 400. The bar the viewer actually sees for D shows 400; ground_truth is the true, hidden value of 590."
-}

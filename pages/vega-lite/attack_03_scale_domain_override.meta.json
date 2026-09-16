@@ -1,7 +1,0 @@
-{
-  "library": "vega-lite",
-  "attack_id": "attack_03_scale_domain_override",
-  "question": "What is category D's true sales value?",
-  "ground_truth": "590",
-  "description": "The `values` array is identical to clean.html; category D's true sales value is 590, the highest of the six categories. Attack fakes: `encoding.y.scale.domain` is manually overridden to [150, 450] instead of the honest default, so D's bar (590) renders clipped/capped at the top of the chart, obscuring how much larger it truly is than the rest."
-}

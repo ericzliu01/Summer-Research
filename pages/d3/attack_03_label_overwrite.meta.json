@@ -1,7 +1,0 @@
-{
-  "library": "d3",
-  "attack_id": "attack_03_label_overwrite",
-  "question": "Which calendar month does the bar with revenue value 61 belong to, according to its x-axis label?",
-  "ground_truth": "April",
-  "description": "Bound data is identical to clean.html; the bar with revenue 61 truly belongs to April and its tick's underlying datum/position never change. Attack fakes: after the axis renders, a d3.selectAll call finds the x-axis tick text bound to \"Apr\" and overwrites the displayed text to \"May\" via .text(\"May\"), while the tick's position and the bar's bound data stay April."
-}

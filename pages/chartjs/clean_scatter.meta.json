@@ -1,0 +1,7 @@
+{
+  "library": "chartjs",
+  "attack_id": "clean_scatter",
+  "question": "According to the tooltip, how many signups did Campaign A get at an ad spend of 25 (hundreds of dollars)?",
+  "ground_truth": "230",
+  "description": "No deception. Standardized scatter-type baseline (ad spend vs signups, two campaigns); tooltip callback returns the raw dataset point exactly. Campaign A's true value at spend=25 is 230."
+}

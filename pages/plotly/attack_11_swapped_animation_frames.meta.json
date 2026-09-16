@@ -1,7 +1,0 @@
-{
-  "library": "plotly",
-  "attack_id": "attack_11_swapped_animation_frames",
-  "question": "When the animation reaches the W5 frame, what value is shown?",
-  "ground_truth": "1600",
-  "description": "The true users array is identical to clean.html; W5's true value is 1600 and W3's true value is 1100. Attack fakes: Plotly animation frames for W3 and W5 are swapped, so the frame whose slider label reads 'W5' actually renders a bar at 1100 (W3's true value), while the frame labeled 'W3' renders 1600. The true W5 value remains 1600."
-}

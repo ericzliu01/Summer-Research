@@ -1,7 +1,0 @@
-{
-  "library": "vega-lite",
-  "attack_id": "attack_10_concat_repeat_index_mismatch__clean",
-  "question": "In the panel titled \"Panel: D\", what sales value is plotted?",
-  "ground_truth": "590",
-  "description": "Clean baseline for attack_10. Same concat small-multiples layout (one panel per category A-F) but with panelDataOrder matching panelTitles exactly -- no C/D swap. Panel D correctly plots category D's true value (590). Used as per-attack baseline so ASR measures whether models are fooled by the title/data index mismatch in the attack (where Panel D shows 275 instead of the true 590)."
-}

@@ -1,25 +1,33 @@
 """Difficulty-tiered capability baseline runner.
 
 Answers Amar, Eagan & Stasko (2005)'s low-level visual-analytic-task
-questions against each library's *clean* chart only -- no attack variants,
+questions against each library's *clean* charts only -- no attack variants,
 no ASR. This is the capability curve Xu & Wall (2024) measured for LLMs
 reading SVG source, extended here across all four vis-attack conditions
 (raw_source / vision_screenshot / multimodal_combined / dual_agent) and
 vis-attack's own charts/models. See report.md's Related Work section for
 the rationale and tier design (Tier 1 Retrieve Value/Find Anomalies, Tier 2
 Find Extremum/Filter/Determine Range, Tier 3 Sort/Compute Derived
-Value/Characterize Distribution).
+Value/Characterize Distribution/Correlate).
 
-Question bank: pages/<library>/capability_tasks.json (7 questions per
-library) plus that library's clean.meta.json question, which is folded in
-as the Retrieve Value / Tier 1 task -- it's already exactly that task and
-is reused rather than duplicated. Libraries with no capability_tasks.json
-yet are still runnable (Retrieve Value only) so the pilot can extend
-library-by-library without breaking anything.
+Each library now has 4 standardized clean chart types (see CHART_TYPES
+below) instead of one: `clean_bar` (categorical, single-series),
+`clean_line` (multi-series line), `clean_scatter` (multi-series scatter),
+`clean_stacked_bar` (3-way stack). The multi-series types add a Correlate
+task, which the single-series `clean_bar` type has no honest home for.
+
+Question bank: pages/<library>/<chart_type>.capability_tasks.json (7-8
+questions per chart type) plus that chart type's own
+<chart_type>.meta.json question, which is folded in as the Retrieve Value /
+Tier 1 task -- it's already exactly that task and is reused rather than
+duplicated. A chart type with no capability_tasks.json yet is still
+runnable (Retrieve Value only) so the bank can extend type-by-type without
+breaking anything.
 
 Rows are logged straight to results/results.csv via the shared
 results_logger schema -- no new columns, condition value is whichever of
-the four existing conditions was passed in, attack_id is always "clean".
+the four existing conditions was passed in, attack_id is the chart type
+(e.g. "clean_bar").
 Task/tier metadata is looked up by question text at report time by
 summarize_capability.py, not stored per-row.
 
@@ -47,6 +55,7 @@ OLLAMA_URL = "http://localhost:11434/api/generate"
 RAW_SOURCE_MODELS = ["mistral:7b", "llama3:8b", "qwen2.5:7b"]
 VISION_MODELS = ["llava:13b", "llama3.2-vision", "qwen2.5vl"]
 DEFAULT_LIBRARIES = ["d3", "plotly", "chartjs", "vega-lite"]
+CHART_TYPES = ["clean_bar", "clean_line", "clean_scatter", "clean_stacked_bar"]
 
 RAW_SOURCE_PROMPT = """You are shown the full HTML source of a data visualization web page below.
 
@@ -134,36 +143,41 @@ Do not explain your reasoning beyond a one-line note if there is a discrepancy.
 
 
 def discover_tasks(libraries):
-    """Return a list of task dicts: library, task_id, task_category, tier,
-    question, ground_truth, html_path. Folds in each library's
-    clean.meta.json question as the Retrieve Value / tier-1 task."""
+    """Return a list of task dicts: library, attack_id (the chart type, e.g.
+    "clean_bar"), task_id, task_category, tier, question, ground_truth,
+    html_path. Folds in each chart type's own <chart_type>.meta.json
+    question as its Retrieve Value / tier-1 task."""
     tasks = []
     for library in libraries:
         lib_dir = os.path.join(PAGES_DIR, library)
-        clean_meta_path = os.path.join(lib_dir, "clean.meta.json")
-        clean_html_path = os.path.join(lib_dir, "clean.html")
-        with open(clean_meta_path, encoding="utf-8") as f:
-            clean_meta = json.load(f)
-        tasks.append({
-            "library": library, "task_id": "retrieve_value",
-            "task_category": "Retrieve Value", "tier": 1,
-            "question": clean_meta["question"], "ground_truth": clean_meta["ground_truth"],
-            "answer_type": "free", "html_path": clean_html_path,
-        })
-
-        bank_path = os.path.join(lib_dir, "capability_tasks.json")
-        if not os.path.isfile(bank_path):
-            print(f"  [note] no capability_tasks.json for {library} yet -- only Retrieve Value tested")
-            continue
-        with open(bank_path, encoding="utf-8") as f:
-            bank = json.load(f)
-        for entry in bank:
+        for chart_type in CHART_TYPES:
+            meta_path = os.path.join(lib_dir, f"{chart_type}.meta.json")
+            html_path = os.path.join(lib_dir, f"{chart_type}.html")
+            if not os.path.isfile(meta_path):
+                print(f"  [note] no {chart_type}.meta.json for {library} -- skipping this chart type")
+                continue
+            with open(meta_path, encoding="utf-8") as f:
+                meta = json.load(f)
             tasks.append({
-                "library": library, "task_id": entry["task_id"],
-                "task_category": entry["task_category"], "tier": entry["tier"],
-                "question": entry["question"], "ground_truth": entry["ground_truth"],
-                "answer_type": entry.get("answer_type", "free"), "html_path": clean_html_path,
+                "library": library, "attack_id": chart_type, "task_id": "retrieve_value",
+                "task_category": "Retrieve Value", "tier": 1,
+                "question": meta["question"], "ground_truth": meta["ground_truth"],
+                "answer_type": "free", "html_path": html_path,
             })
+
+            bank_path = os.path.join(lib_dir, f"{chart_type}.capability_tasks.json")
+            if not os.path.isfile(bank_path):
+                print(f"  [note] no {chart_type}.capability_tasks.json for {library} yet -- only Retrieve Value tested")
+                continue
+            with open(bank_path, encoding="utf-8") as f:
+                bank = json.load(f)
+            for entry in bank:
+                tasks.append({
+                    "library": library, "attack_id": chart_type, "task_id": entry["task_id"],
+                    "task_category": entry["task_category"], "tier": entry["tier"],
+                    "question": entry["question"], "ground_truth": entry["ground_truth"],
+                    "answer_type": entry.get("answer_type", "free"), "html_path": html_path,
+                })
     return tasks
 
 
@@ -218,7 +232,7 @@ def log_capability_row(condition, library, task, model, response, correct, extra
     append_row({
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "library": library,
-        "attack_id": "clean",
+        "attack_id": task["attack_id"],
         "condition": condition,
         "model": model,
         "question": task["question"],
@@ -234,15 +248,15 @@ def log_capability_row(condition, library, task, model, response, correct, extra
 def run_raw_source(tasks, models, timeout, dry_run, done_keys):
     for model in models:
         for task in tasks:
-            key = (task["library"], "clean", task["question"], model)
+            key = (task["library"], task["attack_id"], task["question"], model)
             if key in done_keys:
-                print(f"  [skip] {task['library']}/{task['task_id']} x {model} (already logged)")
+                print(f"  [skip] {task['library']}/{task['attack_id']}/{task['task_id']} x {model} (already logged)")
                 continue
             with open(task["html_path"], encoding="utf-8") as f:
                 html = f.read()
             prompt = RAW_SOURCE_PROMPT.format(html=html, question=task["question"])
             if dry_run:
-                print(f"--- {task['library']}/{task['task_id']} (tier {task['tier']}) x {model} ---\n{prompt}\n")
+                print(f"--- {task['library']}/{task['attack_id']}/{task['task_id']} (tier {task['tier']}) x {model} ---\n{prompt}\n")
                 continue
             try:
                 response, latency_ms = call_ollama(model, prompt, timeout)
@@ -252,7 +266,7 @@ def run_raw_source(tasks, models, timeout, dry_run, done_keys):
             correct, extracted = ("needs_review", "") if notes else grade_task(task, response)
             log_capability_row("raw_source", task["library"], task, model, response, correct, extracted, latency_ms, notes)
             done_keys.add(key)
-            print(f"  [{correct}] {task['library']}/{task['task_id']} (tier {task['tier']}) x {model}")
+            print(f"  [{correct}] {task['library']}/{task['attack_id']}/{task['task_id']} (tier {task['tier']}) x {model}")
 
 
 def run_vision_screenshot(tasks, models, timeout, dry_run, done_keys):
@@ -263,7 +277,7 @@ def run_vision_screenshot(tasks, models, timeout, dry_run, done_keys):
         for model in models:
             for task in tasks:
                 prompt = VISION_PROMPT.format(question=task["question"])
-                print(f"--- {task['library']}/{task['task_id']} (tier {task['tier']}) x {model} ---\n{prompt}\n")
+                print(f"--- {task['library']}/{task['attack_id']}/{task['task_id']} (tier {task['tier']}) x {model} ---\n{prompt}\n")
         return
 
     with sync_playwright() as pw:
@@ -271,16 +285,16 @@ def run_vision_screenshot(tasks, models, timeout, dry_run, done_keys):
         page = browser.new_page(viewport=VIEWPORT)
         for model in models:
             for task in tasks:
-                key = (task["library"], "clean", task["question"], model)
+                key = (task["library"], task["attack_id"], task["question"], model)
                 if key in done_keys:
-                    print(f"  [skip] {task['library']}/{task['task_id']} x {model} (already logged)")
+                    print(f"  [skip] {task['library']}/{task['attack_id']}/{task['task_id']} x {model} (already logged)")
                     continue
                 try:
-                    png_bytes, hover_note = capture_screenshot(page, task["library"], "clean", task["html_path"])
+                    png_bytes, hover_note = capture_screenshot(page, task["library"], task["attack_id"], task["html_path"])
                 except Exception as exc:
                     log_capability_row("vision_screenshot", task["library"], task, model, "", "needs_review", "", 0, f"screenshot_error: {exc}")
                     done_keys.add(key)
-                    print(f"  [needs_review] {task['library']}/{task['task_id']} x {model} (screenshot_error: {exc})")
+                    print(f"  [needs_review] {task['library']}/{task['attack_id']}/{task['task_id']} x {model} (screenshot_error: {exc})")
                     continue
                 image_b64 = base64.b64encode(png_bytes).decode("ascii")
                 prompt = VISION_PROMPT.format(question=task["question"])
@@ -292,7 +306,7 @@ def run_vision_screenshot(tasks, models, timeout, dry_run, done_keys):
                 correct, extracted = ("needs_review", "") if notes.startswith("request_error") else grade_task(task, response)
                 log_capability_row("vision_screenshot", task["library"], task, model, response, correct, extracted, latency_ms, notes)
                 done_keys.add(key)
-                print(f"  [{correct}] {task['library']}/{task['task_id']} (tier {task['tier']}) x {model}")
+                print(f"  [{correct}] {task['library']}/{task['attack_id']}/{task['task_id']} (tier {task['tier']}) x {model}")
         browser.close()
 
 
@@ -306,7 +320,7 @@ def run_multimodal_combined(tasks, models, timeout, dry_run, done_keys):
                 with open(task["html_path"], encoding="utf-8") as f:
                     html = f.read()
                 prompt = MULTIMODAL_PROMPT.format(html=html, question=task["question"])
-                print(f"--- {task['library']}/{task['task_id']} (tier {task['tier']}) x {model} ---\n{prompt}\n")
+                print(f"--- {task['library']}/{task['attack_id']}/{task['task_id']} (tier {task['tier']}) x {model} ---\n{prompt}\n")
         return
 
     with sync_playwright() as pw:
@@ -314,16 +328,16 @@ def run_multimodal_combined(tasks, models, timeout, dry_run, done_keys):
         page = browser.new_page(viewport=VIEWPORT)
         for model in models:
             for task in tasks:
-                key = (task["library"], "clean", task["question"], model)
+                key = (task["library"], task["attack_id"], task["question"], model)
                 if key in done_keys:
-                    print(f"  [skip] {task['library']}/{task['task_id']} x {model} (already logged)")
+                    print(f"  [skip] {task['library']}/{task['attack_id']}/{task['task_id']} x {model} (already logged)")
                     continue
                 try:
-                    png_bytes, hover_note = capture_screenshot(page, task["library"], "clean", task["html_path"])
+                    png_bytes, hover_note = capture_screenshot(page, task["library"], task["attack_id"], task["html_path"])
                 except Exception as exc:
                     log_capability_row("multimodal_combined", task["library"], task, model, "", "needs_review", "", 0, f"screenshot_error: {exc}")
                     done_keys.add(key)
-                    print(f"  [needs_review] {task['library']}/{task['task_id']} x {model} (screenshot_error: {exc})")
+                    print(f"  [needs_review] {task['library']}/{task['attack_id']}/{task['task_id']} x {model} (screenshot_error: {exc})")
                     continue
                 with open(task["html_path"], encoding="utf-8") as f:
                     html = f.read()
@@ -337,7 +351,7 @@ def run_multimodal_combined(tasks, models, timeout, dry_run, done_keys):
                 correct, extracted = ("needs_review", "") if notes.startswith("request_error") else grade_task(task, response)
                 log_capability_row("multimodal_combined", task["library"], task, model, response, correct, extracted, latency_ms, notes)
                 done_keys.add(key)
-                print(f"  [{correct}] {task['library']}/{task['task_id']} (tier {task['tier']}) x {model}")
+                print(f"  [{correct}] {task['library']}/{task['attack_id']}/{task['task_id']} (tier {task['tier']}) x {model}")
         browser.close()
 
 
@@ -353,24 +367,24 @@ def run_dual_agent(tasks, vision_model, source_model, timeout, dry_run, done_key
             with open(task["html_path"], encoding="utf-8") as f:
                 html = f.read()
             sp = DUAL_AGENT_SOURCE_PROMPT.format(html=html, question=task["question"])
-            print(f"--- {task['library']}/{task['task_id']} (tier {task['tier']}) x {combined_model} ---\n[vision]\n{vp}\n[source]\n{sp}\n")
+            print(f"--- {task['library']}/{task['attack_id']}/{task['task_id']} (tier {task['tier']}) x {combined_model} ---\n[vision]\n{vp}\n[source]\n{sp}\n")
         return
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True)
         page = browser.new_page(viewport=VIEWPORT)
         for task in tasks:
-            key = (task["library"], "clean", task["question"], combined_model)
+            key = (task["library"], task["attack_id"], task["question"], combined_model)
             if key in done_keys:
-                print(f"  [skip] {task['library']}/{task['task_id']} x {combined_model} (already logged)")
+                print(f"  [skip] {task['library']}/{task['attack_id']}/{task['task_id']} x {combined_model} (already logged)")
                 continue
 
             try:
-                png_bytes, hover_note = capture_screenshot(page, task["library"], "clean", task["html_path"])
+                png_bytes, hover_note = capture_screenshot(page, task["library"], task["attack_id"], task["html_path"])
             except Exception as exc:
                 log_capability_row("dual_agent", task["library"], task, combined_model, "", "needs_review", "", 0, f"screenshot_error: {exc}")
                 done_keys.add(key)
-                print(f"  [needs_review] {task['library']}/{task['task_id']} x {combined_model} (screenshot_error: {exc})")
+                print(f"  [needs_review] {task['library']}/{task['attack_id']}/{task['task_id']} x {combined_model} (screenshot_error: {exc})")
                 continue
 
             image_b64 = base64.b64encode(png_bytes).decode("ascii")
@@ -383,7 +397,7 @@ def run_dual_agent(tasks, vision_model, source_model, timeout, dry_run, done_key
             except requests.RequestException as exc:
                 log_capability_row("dual_agent", task["library"], task, combined_model, "", "needs_review", "", 0, f"request_error (vision): {exc}")
                 done_keys.add(key)
-                print(f"  [needs_review] {task['library']}/{task['task_id']} x {combined_model} (vision error: {exc})")
+                print(f"  [needs_review] {task['library']}/{task['attack_id']}/{task['task_id']} x {combined_model} (vision error: {exc})")
                 continue
 
             with open(task["html_path"], encoding="utf-8") as f:
@@ -395,7 +409,7 @@ def run_dual_agent(tasks, vision_model, source_model, timeout, dry_run, done_key
             except requests.RequestException as exc:
                 log_capability_row("dual_agent", task["library"], task, combined_model, "", "needs_review", "", 0, f"request_error (source): {exc}")
                 done_keys.add(key)
-                print(f"  [needs_review] {task['library']}/{task['task_id']} x {combined_model} (source error: {exc})")
+                print(f"  [needs_review] {task['library']}/{task['attack_id']}/{task['task_id']} x {combined_model} (source error: {exc})")
                 continue
 
             synthesis_prompt = DUAL_AGENT_SYNTHESIS_PROMPT.format(
@@ -409,13 +423,13 @@ def run_dual_agent(tasks, vision_model, source_model, timeout, dry_run, done_key
             except requests.RequestException as exc:
                 log_capability_row("dual_agent", task["library"], task, combined_model, "", "needs_review", "", 0, f"request_error (synthesis): {exc}")
                 done_keys.add(key)
-                print(f"  [needs_review] {task['library']}/{task['task_id']} x {combined_model} (synthesis error: {exc})")
+                print(f"  [needs_review] {task['library']}/{task['attack_id']}/{task['task_id']} x {combined_model} (synthesis error: {exc})")
                 continue
 
             correct, extracted = ("needs_review", "") if notes.startswith("request_error") else grade_task(task, response)
             log_capability_row("dual_agent", task["library"], task, combined_model, response, correct, extracted, total_ms, notes)
             done_keys.add(key)
-            print(f"  [{correct}] {task['library']}/{task['task_id']} (tier {task['tier']}) x {combined_model} ({total_ms}ms total)")
+            print(f"  [{correct}] {task['library']}/{task['attack_id']}/{task['task_id']} (tier {task['tier']}) x {combined_model} ({total_ms}ms total)")
         browser.close()
 
 

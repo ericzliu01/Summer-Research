@@ -1,7 +1,0 @@
-{
-  "library": "chartjs",
-  "attack_id": "attack_07_doughnut_cutout_desync__clean",
-  "question": "What is the TRUE percentage of total response time that 12pm accounts for?",
-  "ground_truth": "28.6",
-  "description": "Clean baseline for attack_07. Same doughnut chart with identical responseMs data and correctly computed slice sizes, but with no decoyLabelPlugin -- no hardcoded on-slice text overlays. 12pm's true share is 250/875 = 28.6%. Used as per-attack baseline instead of clean.html because the library-level clean.html is a line chart, not a doughnut."
-}

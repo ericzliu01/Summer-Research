@@ -1,0 +1,7 @@
+{
+  "library": "vega-lite",
+  "attack_id": "clean_bar",
+  "question": "According to the tooltip, what are West's signups?",
+  "ground_truth": "310",
+  "description": "No deception. Standardized bar-type baseline (signups by region); tooltip encodes the same signups field used for bar height. West's true signup count is 310."
+}

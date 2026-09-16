@@ -1,7 +1,0 @@
-{
-  "library": "vega-lite",
-  "attack_id": "attack_12_sort_channel_changed",
-  "question": "Is the leftmost bar in the chart the one with the highest sales value?",
-  "ground_truth": "no",
-  "description": "Values and bar heights are identical to clean.html and fully honest; category D has the true highest sales value (590). Attack fakes: the `x` encoding's `sort` is fixed to a manual array (['F','E','D','C','B','A']) that places F (460, the second-highest) leftmost instead of D, so a viewer assuming conventional descending-by-value sort order would wrongly conclude the leftmost bar is the highest."
-}

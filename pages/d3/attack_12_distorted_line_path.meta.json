@@ -1,7 +1,0 @@
-{
-  "library": "d3",
-  "attack_id": "attack_12_distorted_line_path",
-  "question": "Based on the overall visual trend of the connecting line, does revenue spike sharply in June?",
-  "ground_truth": "spike",
-  "description": "Bound data is identical to clean.html; the circle point markers are drawn at the true y-values including June's genuine peak (90, up sharply from May's 47). Attack fakes: after computing a true d3.line() path from the real data, the rendered path's d attribute is manually overwritten with a hand-built path from a synthetic, gradually-increasing series passed through curveBasis, producing a smooth gently-rising curve with no visible June spike, even though the point markers still show the real spike."
-}

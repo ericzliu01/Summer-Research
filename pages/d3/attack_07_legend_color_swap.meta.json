@@ -1,7 +1,0 @@
-{
-  "library": "d3",
-  "attack_id": "attack_07_legend_color_swap",
-  "question": "According to the legend, what color represents 'High' revenue months?",
-  "ground_truth": "green",
-  "description": "Bound data is identical to clean.html; bars are recolored by threshold (revenue >= 60 -> High, rendered green; else Low, rendered orange), with June (90) and Apr (61) truly High/green. Attack fakes: the legend's 'High' swatch is drawn in orange and 'Low' in green -- swapped relative to the real bar fill colors actually used on the chart."
-}

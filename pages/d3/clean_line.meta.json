@@ -1,0 +1,7 @@
+{
+  "library": "d3",
+  "attack_id": "clean_line",
+  "question": "How many Mobile users were there on Saturday?",
+  "ground_truth": "1020",
+  "description": "No deception. Standardized multi-series-line baseline (Mobile vs Desktop daily active users); tooltip and points both reflect the true bound data. Mobile's true Saturday value is 1020."
+}

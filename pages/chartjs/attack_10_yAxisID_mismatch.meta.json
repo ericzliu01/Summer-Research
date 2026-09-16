@@ -1,7 +1,0 @@
-{
-  "library": "chartjs",
-  "attack_id": "attack_10_yAxisID_mismatch",
-  "question": "What is the TRUE response time value at 12pm (regardless of how it renders on the mismatched axis)?",
-  "ground_truth": "250",
-  "description": "Two honest datasets: Response Time (ms) = responseMs verbatim (true 12pm value 250), Error Rate (%) = synthetic series derived from responseMs scaled to ~0-5%. Attack fakes: the Response Time dataset is assigned yAxisID 'yError' (the 0-10% axis) instead of its own 0-300ms axis, so its true 250 value at 12pm renders clipped/compressed near the top of the mismatched scale; the underlying data value (250) is unchanged."
-}

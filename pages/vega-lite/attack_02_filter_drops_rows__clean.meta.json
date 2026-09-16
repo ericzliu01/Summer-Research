@@ -1,7 +1,0 @@
-{
-  "library": "vega-lite",
-  "attack_id": "attack_02_filter_drops_rows__clean",
-  "question": "What is the total sales across all categories?",
-  "ground_truth": "2235",
-  "description": "Clean baseline for attack_02. Identical six-category bar chart (A=320, B=410, C=275, D=590, E=180, F=460; total=2235) with no filter transform -- all rows are visible. Used as per-attack baseline instead of clean.html because the library-level clean.html question targets a single category lookup, while attack_02's question asks for a sum across all six categories."
-}

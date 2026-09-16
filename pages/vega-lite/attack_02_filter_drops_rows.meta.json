@@ -1,7 +1,0 @@
-{
-  "library": "vega-lite",
-  "attack_id": "attack_02_filter_drops_rows",
-  "question": "What is the total sales across all categories?",
-  "ground_truth": "2235",
-  "description": "The underlying `values` array is identical to clean.html: six categories A-F whose true sales sum to 2235. Attack fakes: a `transform: [{filter: \"datum.category !== 'E'\"}]` silently drops category E (sales=180, the only value under 200) before the bar mark runs, with no visible indication a row was excluded. A viewer summing the visible bars would wrongly get 2055."
-}

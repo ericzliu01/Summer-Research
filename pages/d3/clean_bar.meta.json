@@ -1,0 +1,7 @@
+{
+  "library": "d3",
+  "attack_id": "clean_bar",
+  "question": "What is West's signup count?",
+  "ground_truth": "310",
+  "description": "No deception. Standardized bar-type baseline (signups by region); tooltip and bars both reflect the true bound data. West's true signup count is 310."
+}

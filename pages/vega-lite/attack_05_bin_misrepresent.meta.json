@@ -1,7 +1,0 @@
-{
-  "library": "vega-lite",
-  "attack_id": "attack_05_bin_misrepresent",
-  "question": "What is the highest individual sales value among the categories?",
-  "ground_truth": "590",
-  "description": "The six true sales values (320, 410, 275, 590, 180, 460) are identical to clean.html; D=590 is a clear outlier above the rest (180-460). Attack fakes: a histogram of these values using coarse `bin` params (`step: 400, maxbins: 2`) so nearly all six values collapse into 1-2 very wide bins, visually flattening the spread and hiding that D is an outlier."
-}

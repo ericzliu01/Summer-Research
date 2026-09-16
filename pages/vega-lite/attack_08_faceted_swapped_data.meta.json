@@ -1,7 +1,0 @@
-{
-  "library": "vega-lite",
-  "attack_id": "attack_08_faceted_swapped_data",
-  "question": "Under the facet where category D is supposed to appear, what sales value does the chart show for D?",
-  "ground_truth": "590",
-  "description": "The six categories truly split into Group 1 = A,B,C (320,410,275) and Group 2 = D,E,F (590,180,460); D's true sales is 590 and D truly belongs in Group 2. Attack fakes: two side-by-side panels titled 'Group 1 (A, B, C)' and 'Group 2 (D, E, F)' have their underlying values arrays swapped -- the panel titled 'Group 1' actually renders Group 2's data (so D's true bar, 590, appears under the wrong title), while the panel titled 'Group 2' (D's correct/expected title) actually renders Group 1's data, so no D bar appears there at all. Ground truth of 590 reflects D's true sales value, which the swapped-facet mislabeling obscures rather than changes."
-}

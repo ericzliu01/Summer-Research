@@ -1,0 +1,7 @@
+{
+  "library": "plotly",
+  "attack_id": "clean_line",
+  "question": "According to the hover text, how many Mobile users were there on Saturday?",
+  "ground_truth": "1020",
+  "description": "No deception. Standardized multi-series-line baseline (Mobile vs Desktop daily active users); hover text matches the true y values exactly. Mobile's true Saturday value is 1020."
+}

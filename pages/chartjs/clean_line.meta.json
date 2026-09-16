@@ -1,0 +1,7 @@
+{
+  "library": "chartjs",
+  "attack_id": "clean_line",
+  "question": "According to the tooltip, how many Mobile users were there on Saturday?",
+  "ground_truth": "1020",
+  "description": "No deception. Standardized multi-series-line baseline (Mobile vs Desktop daily active users); tooltip callback returns the raw dataset value exactly. Mobile's true Saturday value is 1020."
+}

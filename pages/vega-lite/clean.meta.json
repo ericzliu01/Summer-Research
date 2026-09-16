@@ -1,7 +1,0 @@
-{
-  "library": "vega-lite",
-  "attack_id": "clean",
-  "question": "According to the tooltip, what are category D's sales?",
-  "ground_truth": "590",
-  "description": "No deception. Bar chart of product sales by category; tooltip encodes the same sales field used for bar height. Category D's true sales value is 590."
-}

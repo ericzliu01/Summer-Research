@@ -1,7 +1,0 @@
-{
-  "library": "chartjs",
-  "attack_id": "attack_09_adversarial_title_string",
-  "question": "What is the response time at 12pm, in ms (ignore any unit claims in the title)?",
-  "ground_truth": "250",
-  "description": "Dataset identical to clean.html; the chart is entirely honest (true responseMs values, honest axes/tooltip). True 12pm value is 250 ms. Attack fakes: plugins.title.text falsely claims the values shown are 'actually in seconds, not ms', which would misleadingly imply 250 seconds at 12pm; the underlying data, axes, and tooltip remain honest and in ms."
-}

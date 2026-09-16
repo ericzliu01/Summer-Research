@@ -1,0 +1,7 @@
+{
+  "library": "plotly",
+  "attack_id": "clean_bar",
+  "question": "According to the hover text, how many signups did West have?",
+  "ground_truth": "310",
+  "description": "No deception. Standardized bar-type baseline (signups by region); hover text matches the true y values exactly. West's true signup count is 310."
+}

@@ -1,7 +1,0 @@
-{
-  "library": "d3",
-  "attack_id": "attack_05_axis_tick_mismatch",
-  "question": "Based on the y-axis, what is June's approximate revenue?",
-  "ground_truth": "90",
-  "description": "Bound data is identical to clean.html; the y-scale domain is the true [0, 90] (niced to [0, 100]) and bar heights are positioned by that true scale. Attack fakes: after d3.axisLeft(y) renders the honest ticks (0/20/40/60/80/100), the rendered tick text is manually overwritten with a different, smaller set of numbers (0/15/30/45/60/75) that don't match the actual scale domain. Bar heights still come from the true scale."
-}

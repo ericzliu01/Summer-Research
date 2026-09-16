@@ -1,0 +1,7 @@
+{
+  "library": "chartjs",
+  "attack_id": "clean_bar",
+  "question": "According to the tooltip, how many signups did West have?",
+  "ground_truth": "310",
+  "description": "No deception. Standardized bar-type baseline (signups by region); tooltip callback returns the raw dataset value exactly. West's true signup count is 310."
+}

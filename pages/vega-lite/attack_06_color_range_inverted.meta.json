@@ -1,7 +1,0 @@
-{
-  "library": "vega-lite",
-  "attack_id": "attack_06_color_range_inverted",
-  "question": "Is category D's sales above or below the average of all categories?",
-  "ground_truth": "above",
-  "description": "True sales values are identical to clean.html; the average of all six is 372.5 and category D's true sales (590) is above it. Attack fakes: bars are truthfully color-encoded by an above/below-average field via `calculate`, but the 2-color diverging `scale.range` is inverted -- above-average is RED, below-average is GREEN -- flipping the conventional good/bad color semantic with no legend correction."
-}

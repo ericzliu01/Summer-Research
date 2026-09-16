@@ -5,15 +5,17 @@ conditions (raw_source / vision_screenshot / multimodal_combined /
 dual_agent).
 
 Unlike summarize_results.py (which computes ASR = wrong_rate(attack) -
-wrong_rate(clean baseline)), this script only looks at attack_id=="clean"
-rows and reports raw accuracy, since there is no attack variant here --
-it answers "how good is this model/condition at this *kind* of task on an
-honest chart", not "how much did an attack degrade it".
+wrong_rate(clean baseline)), this script only looks at rows whose
+attack_id is one of the 4 standardized clean chart types (CHART_TYPES) and
+reports raw accuracy, since there is no attack variant here -- it answers
+"how good is this model/condition at this *kind* of task on an honest
+chart", not "how much did an attack degrade it".
 
 Task/tier metadata isn't stored in results.csv -- it's looked up by
-question text from pages/<library>/capability_tasks.json (+ each
-library's clean.meta.json Retrieve Value question) at report time, so
-run_capability_suite.py never had to touch the results.csv schema.
+question text from pages/<library>/<chart_type>.capability_tasks.json (+
+each chart type's own <chart_type>.meta.json Retrieve Value question) at
+report time, so run_capability_suite.py never had to touch the results.csv
+schema.
 
 Usage: python summarize_capability.py
 """
@@ -23,6 +25,7 @@ from collections import defaultdict
 
 from results_logger import read_rows
 from run_attack_suite import PAGES_DIR
+from run_capability_suite import CHART_TYPES
 from summarize_results import fmt_table, md_table
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -32,26 +35,27 @@ TIER_LABELS = {1: "1 - Easy", 2: "2 - Medium", 3: "3 - Hard"}
 
 
 def build_task_lookup():
-    """question text -> (library, task_category, tier). Folds in each
-    library's clean.meta.json Retrieve Value question plus any
-    capability_tasks.json bank present."""
+    """question text -> (library, task_category, tier). Folds in each chart
+    type's own <chart_type>.meta.json Retrieve Value question plus any
+    <chart_type>.capability_tasks.json bank present."""
     lookup = {}
     for library in sorted(os.listdir(PAGES_DIR)):
         lib_dir = os.path.join(PAGES_DIR, library)
         if not os.path.isdir(lib_dir):
             continue
-        clean_meta_path = os.path.join(lib_dir, "clean.meta.json")
-        if os.path.isfile(clean_meta_path):
-            with open(clean_meta_path, encoding="utf-8") as f:
-                clean_meta = json.load(f)
-            lookup[clean_meta["question"]] = (library, "Retrieve Value", 1)
+        for chart_type in CHART_TYPES:
+            meta_path = os.path.join(lib_dir, f"{chart_type}.meta.json")
+            if os.path.isfile(meta_path):
+                with open(meta_path, encoding="utf-8") as f:
+                    meta = json.load(f)
+                lookup[meta["question"]] = (library, "Retrieve Value", 1)
 
-        bank_path = os.path.join(lib_dir, "capability_tasks.json")
-        if os.path.isfile(bank_path):
-            with open(bank_path, encoding="utf-8") as f:
-                bank = json.load(f)
-            for entry in bank:
-                lookup[entry["question"]] = (library, entry["task_category"], entry["tier"])
+            bank_path = os.path.join(lib_dir, f"{chart_type}.capability_tasks.json")
+            if os.path.isfile(bank_path):
+                with open(bank_path, encoding="utf-8") as f:
+                    bank = json.load(f)
+                for entry in bank:
+                    lookup[entry["question"]] = (library, entry["task_category"], entry["tier"])
     return lookup
 
 
@@ -73,7 +77,7 @@ def main():
 
     capability_rows = []
     for row in rows:
-        if row["attack_id"] != "clean":
+        if row["attack_id"] not in CHART_TYPES:
             continue
         task = lookup.get(row["question"])
         if task is None:
@@ -88,17 +92,20 @@ def main():
     by_task = defaultdict(list)
     by_tier = defaultdict(list)
     for r in capability_rows:
-        by_task[(r["condition"], r["model"], r["library"], r["task_category"], r["tier"])].append(r)
+        # attack_id doubles as the chart type (clean_bar/clean_line/clean_scatter/
+        # clean_stacked_bar) here -- keep it in the key so e.g. Find Extremum on
+        # a bar chart isn't blended with Find Extremum on a scatter plot.
+        by_task[(r["condition"], r["model"], r["library"], r["attack_id"], r["task_category"], r["tier"])].append(r)
         by_tier[(r["condition"], r["model"], r["tier"])].append(r)
 
     task_entries = []
     for key, group in by_task.items():
-        condition, model, library, task_category, tier = key
+        condition, model, library, chart_type, task_category, tier = key
         acc, n, nr = accuracy(group)
         if acc is None:
             continue
-        task_entries.append((condition, model, library, task_category, tier, acc, n, nr))
-    task_entries.sort(key=lambda e: (e[0], e[1], e[4], -e[5]))
+        task_entries.append((condition, model, library, chart_type, task_category, tier, acc, n, nr))
+    task_entries.sort(key=lambda e: (e[0], e[1], e[5], -e[6]))
 
     tier_entries = []
     for key, group in by_tier.items():
@@ -111,8 +118,8 @@ def main():
 
     sections = []
 
-    headers1 = ["condition", "model", "library", "task", "tier", "accuracy", "n", "needs_review"]
-    rows1 = [(c, m, lib, tc, TIER_LABELS[t], f"{acc:.1%}", n, nr) for c, m, lib, tc, t, acc, n, nr in task_entries]
+    headers1 = ["condition", "model", "library", "chart_type", "task", "tier", "accuracy", "n", "needs_review"]
+    rows1 = [(c, m, lib, ct, tc, TIER_LABELS[t], f"{acc:.1%}", n, nr) for c, m, lib, ct, tc, t, acc, n, nr in task_entries]
     print("\n== Accuracy by task ==")
     print(fmt_table(headers1, rows1))
     sections.append("## Accuracy by task\n\n" + md_table(headers1, rows1))

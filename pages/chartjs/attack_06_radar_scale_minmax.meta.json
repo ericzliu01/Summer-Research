@@ -1,7 +1,0 @@
-{
-  "library": "chartjs",
-  "attack_id": "attack_06_radar_scale_minmax",
-  "question": "What is the true response time value at 12pm?",
-  "ground_truth": "250",
-  "description": "Radar chart with the 6 hours as axes and true responseMs as radii, plotted correctly; 12pm's true value (250) is a real, large outlier vs. the ~110-140 baseline. Attack fakes: scales.r.min=100/max=260 narrows the radial scale close to the data spread, compressing the visual difference so the shape looks like a near-regular hexagon and disguises how large the true 12pm spike is."
-}
