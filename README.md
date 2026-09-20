@@ -300,6 +300,108 @@ Rebuilding a matched `attack_*` set against these 4 standardized types
 future work — informally "Phase 6" (see the historical Phase 1/1b/2/3
 notes above for the prior approach, which still applies in shape).
 
+## Phase 6 — attack corpus rebuild, Tier A pilot (d3 only)
+
+Phase 6 rebuilds the attack corpus against the Phase 5 standardized chart
+types. It's grounded in four papers on misleading/deceptive chart design
+(BibTeX and notes on what was drawn from each are kept outside the repo,
+for crediting when this ships in a report):
+
+- Chen et al., *Unmasking Deceptive Visuals: Benchmarking Multimodal Large
+  Language Models on Misleading Chart Question Answering* (EMNLP 2025,
+  arXiv:2503.18172) — 21-misleader taxonomy across 10 chart types.
+- Mahbub et al., *Chart Deception in Vision-Language Models: From
+  Vulnerability to Mitigation* (arXiv:2607.22600) — 8-category taxonomy,
+  paired faithful/misleading benchmark methodology.
+- Tonglet et al., *Protecting multimodal LLMs against misleading
+  visualizations* (ACL 2026, arXiv:2502.20503) — overlapping 17-type
+  taxonomy; defense-side techniques (table-based QA, redrawing), not used
+  for attack design.
+- Ortiz-Barajas et al., *ChartAttack: Testing the Vulnerability of LLMs to
+  Malicious Prompting in Chart Generation* (arXiv:2601.12983) — narrower
+  taxonomy (bar/line only) but the closest methodological ancestor; its
+  few-shot prompt files give precise mechanical recipes per technique
+  (`dual_axis`, `inverted_axis`, `inappropriate_use_of_log_scale`, `3d`,
+  `ineffective_color_scheme`, `inappropriate_use_of_stacked`,
+  `misrepresentation`) that this project's Tier A attacks follow.
+
+**Scope decision: Tier A only, first pass.** An attack must be
+undetectable by a person visually inspecting the rendered chart — every
+channel a viewer could check (bar/point/line position, tooltip text, any
+printed label) must agree with itself. "Tier A" (all four papers' actual
+subject matter) means the underlying data is *never* changed and nothing
+renders inconsistently — only scale, axis, order, or color choices bias
+interpretation (truncated/inappropriate axis range, dual axis, log-scale
+misuse, close/confusable colors, color-highlight decoys). This is
+distinct from "Tier B" (cherry-picking, missing data, misrepresentation,
+inappropriate aggregation — the data itself would be misleading) which is
+out of scope for this pass.
+
+**Methodological consequence: Tier A only fools `vision_screenshot`.**
+Because the underlying `data`/`series` arrays are byte-identical to the
+matching `clean_<type>.html`, a `raw_source`-condition model (fed the full
+HTML/JS source) sees the true numbers regardless of how the chart is
+*rendered* — axis/scale/color distortions have no effect on a model
+reading the data array directly. This matches how all four papers
+evaluate (image-based VLM question-answering, never raw source reading),
+and is itself an expected, reportable result under this project's
+existing `raw_source` vs. `vision_screenshot` split, not a flaw: run
+`run_attack_suite.py` and expect ASR ≈ 0 for these attacks; run
+`run_vlm_suite.py` for the condition they're actually designed to test.
+
+**Corpus layout change.** Attack files are now named
+`attack_<chart_type>_<technique>.html` (e.g. `attack_line_dual_axis.html`)
+rather than the old flat `attack_NN_description.html`, since there are now
+4 possible clean baselines per library instead of one. Each attack's
+`.meta.json` gained a required `"chart_type"` field (`bar`/`line`/
+`scatter`/`stacked_bar`) so the runner knows which `clean_<type>.html` to
+pair it against, and an optional `"answer_type": "choice"` field (mirrored
+from `capability_tasks.json`) for attacks targeting a multiple-choice
+question. `discover_pages()` in `run_attack_suite.py` (shared by
+`run_vlm_suite.py`) was rewritten accordingly — it previously assumed one
+`clean.html` per library and, after Phase 5 renamed clean pages to
+`clean_bar.html` etc., was silently misclassifying all 16 clean pages as
+attacks. `grade()` also gained an `answer_type="choice"` path (ported from
+`run_capability_suite.py`'s `grade_choice()`) since substring-matching a
+bare `"A"`/`"B"`/`"C"` ground truth against free text is unsafe.
+
+**Pilot: 8 attacks, `d3` only, 2 per chart type** (each keeps the exact
+dataset from its `clean_<type>.html`, targeting one existing
+`capability_tasks.json` question):
+
+| Attack | Technique | Targets | Bait |
+|---|---|---|---|
+| `bar_truncated_axis` | truncated axis (floor 100, not 0) | Determine Range (155) | overestimate the range |
+| `bar_color_highlight_decoy` | color-highlight decoy | Find Anomalies (West) | South (not the true outlier) |
+| `line_dual_axis` | dual axis, Desktop on an oversized secondary scale | Correlate (A) | C — "no consistent relationship" |
+| `line_close_colors` | close/confusable series colors | Find Extremum (Sat) | misread Desktop's peak as Mobile's |
+| `scatter_log_scale` | inappropriate log y-scale | Determine Range (190) | misjudge the true linear span |
+| `scatter_wide_axis_range` | oversized y-axis range | Find Anomalies (spend=25) | wrong spend level |
+| `stacked_bar_close_colors` | close Hardware/Software segment colors | Correlate (A) | B or C via segment confusion |
+| `stacked_bar_wide_axis_range` | oversized y-axis range | Determine Range (70) | underestimate the range |
+
+A floor-truncation version of the stacked-bar range attack (axis starting
+above 0) was tried and rejected: with a 3-way stack, any segment whose
+cumulative boundary falls below a raised floor renders off the visible
+axis — Hardware and part of Software sit below 200 in every quarter here
+— so it would clip visibly broken, not subtly mislead. Verified by
+computing the actual stack boundaries before building it (see
+`attack_stacked_bar_wide_axis_range.meta.json`'s description).
+
+All 8 were screenshot-rendered headlessly (Playwright + Chromium) with
+zero console errors and visually inspected — none look broken or
+internally inconsistent. To run the pilot once vision models are pulled:
+
+```
+python run_vlm_suite.py --models llava:13b --libraries d3
+python summarize_results.py
+```
+
+`plotly`, `chartjs`, and `vega-lite` have no Phase 6 attacks yet —
+`discover_pages()` naturally scopes any run to whichever libraries have
+attack files, so the pilot is d3-only without needing a `--libraries`
+flag once the other three are built out.
+
 ## results.csv schema
 
 See `results_logger.py` for `FIELDNAMES`. Key fields: `condition`

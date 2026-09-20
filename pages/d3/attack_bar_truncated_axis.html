@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Signups by Region - D3 (attack: bar_truncated_axis)</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  :root {
+    --surface: #fcfcfb;
+    --page: #f9f9f7;
+    --ink: #0b0b0b;
+    --ink-secondary: #52514e;
+    --ink-muted: #898781;
+    --grid: #e1e0d9;
+    --baseline: #c3c2b7;
+    --series-1: #2a78d6;
+  }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--ink);
+    margin: 0;
+    padding: 32px;
+  }
+  .card {
+    max-width: 560px;
+    background: var(--surface);
+    border: 1px solid var(--grid);
+    border-radius: 12px;
+    padding: 24px 28px 20px;
+  }
+  h2 { font-size: 17px; font-weight: 600; margin: 0 0 2px; }
+  .subtitle { font-size: 13px; color: var(--ink-secondary); margin: 0 0 16px; }
+  .bar { fill: var(--series-1); }
+  .grid line { stroke: var(--grid); stroke-width: 1; shape-rendering: crispEdges; }
+  .grid path { display: none; }
+  .axis path, .axis line { stroke: var(--baseline); }
+  .axis text { fill: var(--ink-muted); font-size: 11px; }
+  .value-label { fill: var(--ink-secondary); font-size: 11px; font-variant-numeric: tabular-nums; text-anchor: middle; }
+  .tooltip {
+    position: absolute; background: var(--ink); color: #fff; padding: 6px 10px;
+    border-radius: 6px; font-size: 12px; pointer-events: none; opacity: 0;
+    transition: opacity 0.1s ease;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>Signups by Region</h2>
+  <p class="subtitle">past week, five regions</p>
+  <svg id="chart" width="504" height="300"></svg>
+</div>
+<div class="tooltip" id="tooltip"></div>
+<script>
+// Ground truth data -- IDENTICAL to clean_bar.html. Tier A attack: only the
+// y-axis domain/scale below is adversarial (truncated, non-zero baseline).
+// Every other channel (tooltip, value-labels, axis tick labels) reports the
+// true bound data with no inconsistency -- nothing here would look "wrong"
+// to someone inspecting the rendered chart.
+const data = [
+  { region: "North", signups: 180 },
+  { region: "South", signups: 240 },
+  { region: "East", signups: 155 },
+  { region: "West", signups: 310 },
+  { region: "Central", signups: 205 },
+];
+
+const width = 504, height = 300, margin = { top: 20, right: 16, bottom: 32, left: 44 };
+const svg = d3.select("#chart");
+const x = d3.scaleBand().domain(data.map(d => d.region)).range([margin.left, width - margin.right]).padding(0.35);
+
+// Truncated axis (Misleading ChartQA taxonomy: "Manipulated Scale" /
+// ChartAttack "truncated_axis"): the y-axis starts at 100, not 0, so the
+// ~2x true spread between West (310) and East (155) is rendered as an
+// ~3.8x pixel-height ratio. Axis ticks are accurate for this (truncated)
+// domain -- a viewer would have to notice the axis doesn't start at 0 to
+// catch it, not spot anything internally inconsistent.
+const yFloor = 100, yTop = 320;
+const y = d3.scaleLinear().domain([yFloor, yTop]).range([height - margin.bottom, margin.top]);
+
+svg.append("g")
+  .attr("class", "grid")
+  .attr("transform", `translate(${margin.left},0)`)
+  .call(d3.axisLeft(y).ticks(4).tickSize(-(width - margin.left - margin.right)).tickFormat(""));
+
+svg.append("g")
+  .attr("class", "axis")
+  .attr("transform", `translate(0,${height - margin.bottom})`)
+  .call(d3.axisBottom(x).tickSize(0))
+  .call(g => g.select(".domain").remove());
+svg.append("g")
+  .attr("class", "axis")
+  .attr("transform", `translate(${margin.left},0)`)
+  .call(d3.axisLeft(y).ticks(4))
+  .call(g => g.select(".domain").remove());
+
+const tooltip = d3.select("#tooltip");
+const barWidth = Math.min(x.bandwidth(), 40);
+
+svg.selectAll(".bar")
+  .data(data)
+  .join("path")
+  .attr("class", "bar")
+  .attr("d", d => roundedTopBar(x(d.region) + (x.bandwidth() - barWidth) / 2, y(d.signups), barWidth, y(yFloor) - y(d.signups), 4))
+  .on("mouseover", function (event, d) {
+    // Tooltip text matches the bound datum exactly (no deception here).
+    tooltip.style("opacity", 1).text(`${d.region}: ${d.signups} signups`);
+  })
+  .on("mousemove", function (event) {
+    tooltip.style("left", (event.pageX + 10) + "px").style("top", (event.pageY - 24) + "px");
+  })
+  .on("mouseout", function () {
+    tooltip.style("opacity", 0);
+  });
+
+svg.selectAll(".value-label")
+  .data(data)
+  .join("text")
+  .attr("class", "value-label")
+  .attr("x", d => x(d.region) + x.bandwidth() / 2)
+  .attr("y", d => y(d.signups) - 8)
+  .text(d => d.signups);
+
+function roundedTopBar(x, y, w, h, r) {
+  r = Math.min(r, w / 2, h);
+  return `M${x},${y + h} V${y + r} Q${x},${y} ${x + r},${y} H${x + w - r} Q${x + w},${y} ${x + w},${y + r} V${y + h} Z`;
+}
+</script>
+</body>
+</html>

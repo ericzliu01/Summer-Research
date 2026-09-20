@@ -56,18 +56,20 @@ Answer with just the final answer (a short value, e.g. a number or a single word
 
 
 def discover_pages():
-    """Return (clean_by_library, clean_by_attack, attacks).
+    """Return (clean_by_key, attacks).
 
-    clean_by_library: library -> entry for the library-wide clean.html.
-    clean_by_attack:  (library, attack_id) -> entry for a per-attack
-        companion clean page (file named <attack_id>__clean.html).  When
-        present, callers should prefer this over clean_by_library for that
-        attack's baseline, because the library-level clean.html may have an
-        incompatible chart structure.
-    attacks: list of attack entry dicts (excludes clean pages).
+    Phase 5 replaced the old single-clean.html-per-library corpus with 4
+    standardized chart types (clean_bar/clean_line/clean_scatter/
+    clean_stacked_bar) per library, so there is one clean baseline per
+    (library, chart_type), not one per library.
+
+    clean_by_key: (library, chart_type) -> entry for that library's
+        clean_<chart_type>.html baseline.
+    attacks: list of attack entry dicts (excludes clean pages), each
+        carrying "chart_type" (from its meta.json) so callers know which
+        clean_by_key baseline to pair it with.
     """
-    clean_by_library = {}
-    clean_by_attack = {}
+    clean_by_key = {}
     attacks = []
     for library in sorted(os.listdir(PAGES_DIR)):
         lib_dir = os.path.join(PAGES_DIR, library)
@@ -82,21 +84,21 @@ def discover_pages():
             with open(meta_path, encoding="utf-8") as f:
                 meta = json.load(f)
             html_path = os.path.join(lib_dir, fname)
+            attack_id = meta["attack_id"]
             entry = {
                 "library": library,
-                "attack_id": meta["attack_id"],
+                "attack_id": attack_id,
                 "html_path": html_path,
                 "question": meta["question"],
                 "ground_truth": meta["ground_truth"],
+                "answer_type": meta.get("answer_type", "free"),
             }
-            if fname == "clean.html" or meta["attack_id"] == "clean":
-                clean_by_library[library] = entry
-            elif meta["attack_id"].endswith("__clean"):
-                real_attack_id = meta["attack_id"][: -len("__clean")]
-                clean_by_attack[(library, real_attack_id)] = entry
+            if attack_id.startswith("clean_"):
+                clean_by_key[(library, attack_id[len("clean_"):])] = entry
             else:
+                entry["chart_type"] = meta["chart_type"]
                 attacks.append(entry)
-    return clean_by_library, clean_by_attack, attacks
+    return clean_by_key, attacks
 
 
 def extract_numbers(text):
@@ -109,9 +111,30 @@ def extract_numbers(text):
     return out
 
 
-def grade(response, ground_truth):
-    """Return (correct, extracted_answer) where correct is 'true'/'false'/'needs_review'."""
+CHOICE_PREFIX_RE = re.compile(r"^(the\s+answer\s+is|answer)\s*:?\s*", re.IGNORECASE)
+
+
+def grade(response, ground_truth, answer_type="free"):
+    """Return (correct, extracted_answer) where correct is 'true'/'false'/'needs_review'.
+
+    answer_type="choice" (the Correlate task, and any other multiple-choice
+    capability question an attack targets) uses a safe first-token A/B/C
+    match instead of substring matching: a bare-letter ground truth like
+    "A" would otherwise false-match the English article "a" inside ordinary
+    prose (e.g. "...looks like a gradual increase...").
+    """
     resp = (response or "").strip()
+
+    if answer_type == "choice":
+        if not resp:
+            return "needs_review", ""
+        stripped = CHOICE_PREFIX_RE.sub("", resp).strip(" \t\n.():\"'")
+        first_token = re.split(r"[\s,.;:)]", stripped, maxsplit=1)[0] if stripped else ""
+        if len(first_token) != 1 or first_token.upper() not in ("A", "B", "C"):
+            return "needs_review", ""
+        letter = first_token.upper()
+        return ("true" if letter == ground_truth.strip().upper() else "false"), letter
+
     lower = resp.lower()
 
     if not resp:
@@ -163,7 +186,8 @@ def already_done_keys(condition=CONDITION):
     return keys
 
 
-def run_trial(library, attack_id, html_path, question, ground_truth, model, timeout, done_keys):
+def run_trial(library, attack_id, html_path, question, ground_truth, model, timeout, done_keys,
+              answer_type="free"):
     key = (library, attack_id, question, model)
     if key in done_keys:
         print(f"  [skip] {library}/{attack_id} x {model} (already logged)")
@@ -182,7 +206,7 @@ def run_trial(library, attack_id, html_path, question, ground_truth, model, time
     if notes:
         correct, extracted = "needs_review", ""
     else:
-        correct, extracted = grade(response, ground_truth)
+        correct, extracted = grade(response, ground_truth, answer_type)
 
     append_row({
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
@@ -217,7 +241,7 @@ def main():
     models = [m.strip() for m in args.models.split(",") if m.strip()]
     libraries = {l.strip() for l in args.libraries.split(",") if l.strip()}
 
-    clean_by_library, clean_by_attack, attacks = discover_pages()
+    clean_by_key, attacks = discover_pages()
     attacks = [a for a in attacks if a["library"] in libraries]
     if args.limit is not None:
         capped = []
@@ -241,16 +265,16 @@ def main():
             run_trial(
                 library, attack["attack_id"], attack["html_path"],
                 attack["question"], attack["ground_truth"], model,
-                args.timeout, done_keys,
+                args.timeout, done_keys, attack["answer_type"],
             )
 
-            # Per-attack companion clean preferred; fall back to library clean.
-            clean = clean_by_attack.get((library, attack["attack_id"])) or clean_by_library.get(library)
+            # Baseline: that attack's clean chart-type page, same library.
+            clean = clean_by_key.get((library, attack["chart_type"]))
             if clean is not None:
                 run_trial(
                     library, f"{attack['attack_id']}__clean_baseline", clean["html_path"],
                     attack["question"], attack["ground_truth"], model,
-                    args.timeout, done_keys,
+                    args.timeout, done_keys, attack["answer_type"],
                 )
 
 

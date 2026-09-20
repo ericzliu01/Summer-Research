@@ -1,0 +1,8 @@
+{
+  "library": "d3",
+  "attack_id": "scatter_log_scale",
+  "chart_type": "scatter",
+  "question": "What is the range (max minus min) of Campaign A's signups across all ad spend levels?",
+  "ground_truth": "190",
+  "description": "Tier A / presentation-only attack: the y-axis (signup counts, a linear/additive quantity, not exponential) uses a log scale, compressing the visual gap between high values and stretching the gap between low values. Axis ticks are accurate for the log scale shown; data, tooltips, and points are unchanged. Technique: 'inappropriate_use_of_log_scale' (ChartAttack arXiv:2601.12983) / Inappropriate Scale Functions (Misleading ChartQA arXiv:2503.18172). True range is 190 (310-120); the log-compressed scale may bias a vision-reading model's estimate of the true linear span."
+}
