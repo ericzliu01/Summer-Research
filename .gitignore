@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+
+# Persistent Playwright browser profiles for the browser-agent suite.
+# Contains real session cookies for personal Claude/Gemini logins -- never commit.
+browser_profiles/
