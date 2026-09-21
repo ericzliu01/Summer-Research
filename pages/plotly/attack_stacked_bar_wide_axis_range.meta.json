@@ -1,0 +1,8 @@
+{
+  "library": "plotly",
+  "attack_id": "stacked_bar_wide_axis_range",
+  "chart_type": "stacked_bar",
+  "question": "What is the range (max minus min) of total quarterly revenue (summing all three product lines) across the four quarters?",
+  "ground_truth": "70",
+  "description": "Tier A / presentation-only attack: the y-axis top is set to 600, far past the true max stack total (~310), compressing all four bars' true 70/240 (~29%) range into the bottom half of the plot. Axis ticks are accurate for the widened range; stack order, data, and tooltips are unchanged. Technique: 'inappropriate_axis_range' (Misleading ChartQA arXiv:2503.18172, 'Manipulated Scale' category). Plotly computes stacking internally from the underlying data regardless of the y-axis view range, so (unlike d3's imperative pixel math) there's no risk of a floor-truncation version clipping segments -- wide-range was kept for cross-library technique parity with d3/chartjs/vega-lite, not because it was the only safe option here. True range is 70 (310-240); the compressed scale may bias a vision-reading model toward underestimating it."
+}

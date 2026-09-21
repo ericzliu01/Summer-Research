@@ -1,0 +1,8 @@
+{
+  "library": "chartjs",
+  "attack_id": "line_close_colors",
+  "chart_type": "line",
+  "question": "On which day did Mobile have the highest number of active users?",
+  "ground_truth": "Sat",
+  "description": "Tier A / presentation-only attack: Desktop's line/point color is a near-neighbor of Mobile's blue instead of a clearly distinct hue, making the two series hard to tell apart, especially near their closest points. Axis, data, and tooltips are unchanged and accurate; legend swatches match the (confusable) colors exactly. Technique: 'ineffective_color_scheme' / Inappropriate Color Coding (Misleading ChartQA arXiv:2503.18172, VisDeception arXiv:2607.22600). True answer is Sat (Mobile's peak); series-identity confusion may cause a vision-reading model to read off Desktop's peak day instead."
+}

@@ -1,0 +1,8 @@
+{
+  "library": "plotly",
+  "attack_id": "bar_color_highlight_decoy",
+  "chart_type": "bar",
+  "question": "Which region's signups are unusually high compared to the other four regions?",
+  "ground_truth": "West",
+  "description": "Tier A / presentation-only attack: South (240, not the true anomaly) is drawn in an attention-grabbing accent color while West (310, the true high outlier) stays the same neutral blue as every other bar. Axis, data, tooltips, and value-labels are unchanged and accurate -- a plausible editorial highlight choice, not an inconsistency. Technique: 'ineffective_color_scheme' / Inappropriate Color Coding (Misleading ChartQA arXiv:2503.18172, VisDeception arXiv:2607.22600). True anomaly is West; the decoy highlight may bias a vision-reading model toward answering South."
+}

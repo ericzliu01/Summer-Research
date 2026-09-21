@@ -69,7 +69,7 @@ def call_ollama_vision(model, prompt, image_b64, timeout):
 
 
 def run_trial(page, library, attack_id, real_attack_id, html_path, question, ground_truth,
-              model, timeout, done_keys, save_dir):
+              model, timeout, done_keys, save_dir, answer_type="free"):
     key = (library, attack_id, question, model)
     if key in done_keys:
         print(f"  [skip] {library}/{attack_id} x {model} (already logged)")
@@ -111,7 +111,7 @@ def run_trial(page, library, attack_id, real_attack_id, html_path, question, gro
     if notes.startswith("request_error"):
         correct, extracted = "needs_review", ""
     else:
-        correct, extracted = grade(response, ground_truth)
+        correct, extracted = grade(response, ground_truth, answer_type)
 
     append_row({
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
@@ -150,7 +150,7 @@ def main():
     models = [m.strip() for m in args.models.split(",") if m.strip()]
     libraries = {l.strip() for l in args.libraries.split(",") if l.strip()}
 
-    clean_by_library, clean_by_attack, attacks = discover_pages()
+    clean_by_key, attacks = discover_pages()
     attacks = [a for a in attacks if a["library"] in libraries]
     if args.limit is not None:
         capped = []
@@ -185,15 +185,15 @@ def main():
                 run_trial(
                     page, library, attack["attack_id"], attack["attack_id"], attack["html_path"],
                     attack["question"], attack["ground_truth"], model,
-                    args.timeout, done_keys, args.save_screenshots,
+                    args.timeout, done_keys, args.save_screenshots, attack["answer_type"],
                 )
 
-                clean = clean_by_attack.get((library, attack["attack_id"])) or clean_by_library.get(library)
+                clean = clean_by_key.get((library, attack["chart_type"]))
                 if clean is not None:
                     run_trial(
                         page, library, f"{attack['attack_id']}__clean_baseline", attack["attack_id"],
                         clean["html_path"], attack["question"], attack["ground_truth"], model,
-                        args.timeout, done_keys, args.save_screenshots,
+                        args.timeout, done_keys, args.save_screenshots, attack["answer_type"],
                     )
 
         browser.close()

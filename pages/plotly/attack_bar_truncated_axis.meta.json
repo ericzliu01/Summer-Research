@@ -1,0 +1,8 @@
+{
+  "library": "plotly",
+  "attack_id": "bar_truncated_axis",
+  "chart_type": "bar",
+  "question": "What is the range (max minus min) of signups across the five regions?",
+  "ground_truth": "155",
+  "description": "Tier A / presentation-only attack (data-preserving, no rendered inconsistency): the y-axis starts at 100 instead of 0, exaggerating West-vs-East's true ~2x pixel-height ratio. All data, tooltips, and value-labels are unchanged and accurate -- only the axis floor is adversarially chosen. Technique: 'truncated_axis' (Misleading ChartQA / ChartAttack taxonomy, see arXiv:2503.18172, arXiv:2601.12983). True range is 155 (310-155); the exaggerated visual spread may bias a vision-reading model toward overestimating it."
+}

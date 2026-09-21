@@ -9,27 +9,29 @@ assumes no persistent long-lived shell.
 
 ## Layout
 
-As of Phase 5 the corpus is **standardized chart types, not per-library
-one-offs**: every library implements the same 4 chart types over the same
-4 datasets, and the old single-chart-type `clean.html` + `attack_*.html`
-corpus (Phases 1-4's original subject) has been removed — see "Phase 5"
-below for why, and "Phase 1/1b/2/3 (historical)" for what used to live here.
+The corpus is **standardized chart types, not per-library one-offs**:
+every library implements the same 4 chart types over the same 4 datasets.
+An older single-chart-type `clean.html` + `attack_*.html` corpus (one
+fixed question per library, no multi-series/scatter/stacked charts) was
+fully replaced by this one — see "Phase 5" below for the standardized
+baselines and "Phase 6" for the attack corpus rebuilt against them.
 
 ```
 pages/<library>/clean_bar.html                    # standardized type 1: categorical bar (single-series)
 pages/<library>/clean_line.html                   # standardized type 2: multi-series line
 pages/<library>/clean_scatter.html                # standardized type 3: multi-series scatter
 pages/<library>/clean_stacked_bar.html             # standardized type 4: 3-way stacked bar
+pages/<library>/attack_<chart_type>_<technique>.html # deceptive variant of one chart type (Phase 6)
 pages/<library>/<chart_type>.meta.json             # ground truth sidecar (scoring only, never served)
-pages/<library>/<chart_type>.capability_tasks.json # Amar-taxonomy tiered question bank for that chart type (Phase 5)
+pages/<library>/<chart_type>.capability_tasks.json # Amar-taxonomy tiered question bank for that chart type
 results_logger.py                       # shared CSV schema (FIELDNAMES) + append_row()
 server.py                               # Flask app: serves pages/, POST /log
 log_form.html                           # manual/browser-agent trial logging UI
-run_attack_suite.py                     # automated Ollama trial runner, raw HTML source (Phase 1, historical)
-run_vlm_suite.py                        # automated Ollama trial runner, screenshot + vision model (Phase 1b, historical)
-run_multimodal_suite.py                 # automated Ollama trial runner, screenshot + source together (Phase 3, historical)
-run_dual_agent_suite.py                 # automated Ollama trial runner, vision agent -> text agent pipeline (Phase 3, historical)
-run_capability_suite.py                 # difficulty-tiered capability baseline, clean charts only (Phase 4/5)
+run_attack_suite.py                     # automated Ollama trial runner: attack pages, raw HTML source
+run_vlm_suite.py                        # automated Ollama trial runner: attack pages, screenshot + vision model
+run_multimodal_suite.py                 # automated Ollama trial runner: attack pages, screenshot + source together
+run_dual_agent_suite.py                 # standalone vision-agent -> text-agent runner (superseded by run_capability_suite.py's dual_agent condition)
+run_capability_suite.py                 # difficulty-tiered capability baseline, clean charts only, all 5 conditions
 summarize_results.py                   # ASR tables from results/results.csv
 summarize_capability.py                 # accuracy-by-task-tier tables from results/results.csv
 results/results.csv                     # all trials: automated + manual, one schema
@@ -55,23 +57,13 @@ pip install flask requests
 # Ollama running locally with the models you want to test pulled, e.g.:
 ollama pull mistral:7b
 
-# For the vision (VLM) pipeline (Phase 1b) only:
+# For the vision (VLM) pipeline only:
 pip install playwright
 playwright install chromium
 ollama pull llava:13b   # or any vision-capable tag: llama3.2-vision, qwen2.5vl, bakllava, ...
 ```
 
-## Phase 1 — automated pipeline (historical)
-
-> **Superseded by Phase 5.** Phases 1-4 ran against a per-library
-> hand-built attack corpus (`clean.html` + ~10-14 `attack_*.html` variants
-> per library) that has since been deleted — see "Phase 5" below. The
-> mechanism and file paths described here (e.g. `clean.html`,
-> `attack_01_fake_tooltip.html`) are kept as a historical record of the
-> methodology; none of those specific files exist in `pages/` anymore.
-> Rebuilding an equivalent attack set against the new standardized chart
-> types (`clean_bar`/`clean_line`/`clean_scatter`/`clean_stacked_bar`) is
-> future work, tracked informally as "Phase 6".
+## Running the attack suite
 
 ```
 python run_attack_suite.py --models mistral:7b --libraries d3 --timeout 60
@@ -81,12 +73,13 @@ python summarize_results.py
 For each `(library, attack, model)` triple, the runner POSTs the attack
 page's raw HTML source plus its fixed question to Ollama's `/api/generate`,
 grades the reply against `ground_truth` (numeric within ~1% tolerance,
-case-insensitive substring match for categorical answers; ambiguous replies
-are logged as `correct=needs_review`, never guess-scored), and also re-runs
-the same question against that library's `clean.html` so ASR is computable
-against a like-for-like baseline. Rows already present in `results.csv` for
-a given `(library, attack_id, question, model)` are skipped, so a
-killed/requeued SLURM job resumes instead of redoing work.
+case-insensitive substring match for categorical answers, first-token A/B/C
+match for `answer_type: "choice"` questions; ambiguous replies are logged
+as `correct=needs_review`, never guess-scored), and also re-runs the same
+question against that attack's matching `clean_<chart_type>.html` so ASR
+is computable against a like-for-like baseline. Rows already present in
+`results.csv` for a given `(library, attack_id, question, model)` are
+skipped, so a killed/requeued SLURM job resumes instead of redoing work.
 
 `summarize_results.py` computes:
 
@@ -95,19 +88,15 @@ killed/requeued SLURM job resumes instead of redoing work.
 grouped by attack, by library, and by model, ranked descending, printed as
 a table and written to `results/summary.md`.
 
-Validate on `mistral:7b` against the starter set of pages before scaling up
-models/libraries — confirm the request loop, grading, and resumability all
-work end to end.
+Validate on `mistral:7b` against a small `--libraries`/`--limit` slice
+before scaling up models/libraries — confirm the request loop, grading,
+and resumability all work end to end.
 
-## Phase 1b — vision (VLM) pipeline (historical)
+## Running the vision (VLM) pipeline
 
-> **Superseded by Phase 5** — see the note under Phase 1. The specific
-> attack filenames referenced below no longer exist in `pages/`; kept as a
-> historical record of the hover/timing automation approach for Phase 6.
-
-Phase 1 feeds a model the raw HTML source — a fair test of whether an
-attack fools *text/code reading*, but not of whether it fools a model that
-only ever sees rendered pixels. `run_vlm_suite.py` answers that:
+Raw HTML source is a fair test of whether an attack fools *text/code
+reading*, but not of whether it fools a model that only ever sees rendered
+pixels. `run_vlm_suite.py` answers that:
 
 ```
 python run_vlm_suite.py --models llava:13b --libraries d3 --timeout 120
@@ -118,42 +107,37 @@ For each `(library, attack, model)` triple it renders the page headlessly
 (Playwright + Chromium), takes a screenshot, and sends that image (via
 Ollama's `images` field on `/api/generate`, condition `vision_screenshot`)
 plus the fixed question to a vision-capable model — grading, baseline
-pairing, and resumability all work identically to Phase 1, and both
-conditions land in the same `results/results.csv` / `summary.md`, broken
-out by `condition`.
+pairing, and resumability all work identically to the raw-source runner,
+and both conditions land in the same `results/results.csv` / `summary.md`,
+broken out by `condition`.
 
-A few attacks need more than a static render to actually show their
-deception in a screenshot:
+`run_multimodal_suite.py` runs the same attack corpus under a third
+condition, `multimodal_combined` — both the screenshot AND the raw HTML
+source in the same prompt, testing whether giving a model both channels
+helps it resist attacks that exploit a discrepancy between what the source
+says and what renders. Same grading/resumability/baseline-pairing
+machinery, same CLI shape:
 
-- **Tooltip/hover attacks** (e.g. `d3/attack_01_fake_tooltip`,
-  `plotly/attack_02_customdata_mismatch`, `vega-lite/attack_01_fake_tooltip_field`)
-  — the runner hovers the specific mark the question is about (computed via
-  each library's own coordinate API: D3 element bounding boxes, Chart.js's
-  `Chart.getChart()`, Plotly's `xaxis.d2p()`/`yaxis.d2p()`, and the Vega
-  View API exposed as `window.__vegaView` by the two vega-lite pages that
-  need it) before capturing, so the fake tooltip is actually on screen.
-- **Time-sensitive attacks** — `d3/attack_14_delayed_transition`'s question
-  is about the chart "as it initially renders", so the runner captures
-  early (200ms), before its 800ms mutation fires.
-  `chartjs/attack_04_dataset_hidden_after_first_read`'s hidden series stays
-  hidden indefinitely, so the runner captures late (1500ms) — that's what
-  any real viewer who doesn't screenshot within the first second sees, and
-  a vision reader has no way to recover the hidden series' value at all.
-- **Multi-step widget interactions are not automated** and are skipped
-  outright (printed at the start of a run), rather than screenshotting the
-  default state and silently mis-scoring it:
-  `plotly/attack_08_updatemenus_dataset_swap` (needs clicking a custom
-  Plotly dropdown) and `plotly/attack_11_swapped_animation_frames` (needs
-  stepping an animation slider).
+```
+python run_multimodal_suite.py --models llava:13b --libraries d3 --timeout 180
+python summarize_results.py
+```
 
-Every hover/timing rule above was verified end to end with a live
-headless-Chromium smoke test (not just read from source) — including
-catching and fixing a real bug in `d3/attack_13_voronoi_hitarea_mismatch`
-in the process: its hit-area jitter only offset `x`, so hovering June's
-true point resolved to April's value instead of the documented May, since
-revenue isn't monotonic across months and a same-x/wrong-y site can end up
-farther away than some other site entirely. Fixed by jittering both `x` and
-`y` together so the intended site sits exactly on the hovered point.
+Some attacks need more than a static render to actually show their
+deception in a screenshot — a tooltip that only appears on hover, or a
+chart that mutates shortly after load. Both `run_vlm_suite.py` and
+`run_multimodal_suite.py` support this per-attack via `HOVER_TARGETS`
+(hovers a specific mark, computed through each library's own coordinate
+API — D3 bounding boxes, Chart.js's `Chart.getChart()`, Plotly's
+`xaxis.d2p()`/`yaxis.d2p()`, the Vega View API) and `TIMING_OVERRIDES`
+(captures earlier/later than the default settle time) keyed by
+`(library, attack_id)`, plus an `UNSUPPORTED` dict for attacks needing
+multi-step widget interaction that isn't automated — skipped outright with
+a printed reason, never silently mis-scored against a default state. None
+of the current Phase 6 attacks need any of this (they're pure axis/scale/
+color distortions, legible from a plain post-render screenshot), so these
+dicts are currently empty of live entries, but the machinery is there for
+interaction-dependent attacks.
 
 Use `--headed` to watch the browser interact live, or `--save-screenshots
 DIR` to write every captured PNG to disk, if you want to eyeball a new
@@ -168,65 +152,30 @@ via the same `FIELDNAMES` schema (`condition` = `human` or `browser_agent`
 instead of `raw_source`), so manual and automated trials are directly
 comparable.
 
-## Phase 2 — expanding the attack set (historical)
+## Phase 5 — standardized chart-type baselines + full capability coverage
 
-> **Superseded by Phase 5.** The approach below (one `attack_*.html` per
-> deceptive variant, sharing a library's baseline dataset) is still the
-> right shape for Phase 6's rebuild — just against `clean_bar.html` /
-> `clean_line.html` / `clean_scatter.html` / `clean_stacked_bar.html`
-> instead of a single `clean.html`.
+An earlier corpus gave each library exactly one clean baseline chart type
+(d3 and vega-lite: single-series bar; chartjs: single-series line; plotly:
+single-series scatter/line), and its capability question bank was built
+out for `d3` only, as a pilot. No chart was multi-series or scatter, so
+Cluster and Correlate had "no honest home." Phase 5 replaced that entire
+original corpus (`clean.html` + all `attack_*.html` files, per library)
+with 4 standardized chart types implemented identically (same dataset,
+same ground truth) across all 4 libraries:
 
-Add new `attack_*.html` files per library, each reusing the exact same base
-dataset as that library's clean chart so questions stay comparable within
-a library, each with a ground-truth comment block + matching `.meta.json`.
-See the project brief for the full target list per library.
+| Type | Dataset | Adds |
+|---|---|---|
+| `clean_bar` | Signups by region (5 categories) | Retrieve Value / Find Extremum / Sort / Filter / Determine Range / Compute Derived Value / Characterize Distribution / Find Anomalies |
+| `clean_line` | Daily active users, Mobile vs Desktop (multi-series) | the above, plus **Correlate** ("do Mobile and Desktop move together") |
+| `clean_scatter` | Ad spend vs signups, two campaigns (multi-series, continuous x) | the above, plus **Correlate** (spend vs. signups relationship per campaign) |
+| `clean_stacked_bar` | Quarterly revenue by product line (3-way stack) | the above, plus **Correlate** (do two of the three stacked series move together), and a natural home for Compute Derived Value (stack totals) |
 
-## Phase 3 — methodological hardening (historical)
-
-> **Superseded by Phase 5** — see the note under Phase 1. This phase's
-> DOM/config-extraction hardening was never implemented against the
-> original attack corpus and is moot until Phase 6 rebuilds attacks against
-> the standardized chart types.
-
-Phase 1 feeds raw HTML source to the model, including comments and
-revealing variable names (e.g. `FAKE_TOOLTIP_OVERRIDES`) — a model doing
-literal code-reading could "solve" an attack by spotting the mismatch in
-source, which isn't a fair proxy for what a DOM-reading or vision-based
-agent would perceive. The vision leg of that is now covered by Phase 1b
-(`run_vlm_suite.py`, condition `vision_screenshot`). What's still planned
-here is the DOM-reading leg: render each page headlessly (Playwright +
-headless Chromium), extract the post-execution DOM with `<script>` tags
-stripped, and feed that instead of raw source for D3/Plotly/Vega-Lite.
-
-Chart.js (and Vega-Lite under a canvas renderer) can't use DOM extraction
-the same way — a bare `<canvas>` tag looks identical clean vs. attacked to
-a DOM-only reader. That's a real result (canvas blindness), not a bug to
-paper over: add a second "config-reading" condition that serializes the
-exposed `chart.data`/`chart.config` object instead, and report DOM-only vs.
-config-reading as two distinct agent-capability conditions rather than one
-blended number.
-
-If running on an HPC cluster, compute nodes may lack outbound internet to
-fetch Playwright's Chromium binary — install/cache it on a machine with
-internet access first, or pre-render and check in static DOM snapshots.
-
-Re-run Phase 1 with hardened DOM/config extraction and diff the ASR against
-the raw-source run — the gap tells you how much of the original signal was
-"attack effectiveness" vs. "model reading dev comments."
-
-## Phase 4 — difficulty-tiered capability baseline (design)
-
-Phases 1-3 gave every chart exactly one fixed question, almost all of them
-Retrieve Value (a few Find Extremum) -- the easiest end of the task
-difficulty curve Xu & Wall (2024) measured for LLMs reading SVG chart
-source against Amar, Eagan & Stasko (2005)'s ten-task taxonomy. That means
-ASR alone can't distinguish "the attack broke a genuine capability" from
-"the task was already free." Phase 4 introduced a capability baseline,
-independent of any attack, so ASR can eventually be read against how hard
-each task actually is; Phase 5 (below) is what actually implements it, in
-full, across every library and chart type.
-
-Tier design, following Xu & Wall's reported accuracy bands:
+Each chart type's question bank is difficulty-tiered, following Xu & Wall
+(2024)'s reported accuracy bands for LLMs reading chart source against
+Amar, Eagan & Stasko (2005)'s ten-task taxonomy — this is what lets ASR
+eventually be read against how hard a task already was, rather than
+conflating "the attack broke a genuine capability" with "the task was
+already free":
 
 | Tier | Tasks | Xu & Wall's reported accuracy band |
 |---|---|---|
@@ -237,36 +186,16 @@ Tier design, following Xu & Wall's reported accuracy bands:
 Tier 3's multiple-choice questions (`answer_type: "choice"` in the JSON)
 follow Xu & Wall's own adaptation for tasks whose free-response accuracy
 was near zero. These are graded by `grade_choice()` in
-`run_capability_suite.py`, **not** the shared `grade()` used everywhere
-else: `grade()`'s substring match is unsafe for a bare letter ground truth
-like `"A"`, since that letter trivially appears inside ordinary prose (the
-word "a" as an English article, "because", "correct", ...). `grade_choice()`
-instead requires the first token of the (lightly normalized) reply to be a
-bare A/B/C, matching what "answer with just the letter" actually asked
-for, and falls back to `needs_review` rather than guess-scoring anything
-else.
-
+`run_capability_suite.py` (and, since Phase 6, by the equivalent path in
+`run_attack_suite.py`'s `grade()`), **not** a plain substring match:
+substring matching is unsafe for a bare letter ground truth like `"A"`,
+since that letter trivially appears inside ordinary prose (the word "a" as
+an English article, "because", "correct", ...). `grade_choice()` instead
+requires the first token of the (lightly normalized) reply to be a bare
+A/B/C, matching what "answer with just the letter" actually asked for, and
+falls back to `needs_review` rather than guess-scoring anything else.
 Task/tier metadata is looked up by question text at report time
-(`summarize_capability.py`), not stored in `results.csv` -- this design
-required no changes to `results_logger.py`'s schema.
-
-## Phase 5 — standardized chart-type baselines + full capability coverage
-
-Phases 1-4 gave each library exactly one clean baseline chart type (d3 and
-vega-lite: single-series bar; chartjs: single-series line; plotly:
-single-series scatter/line), and Phase 4's capability bank was built out
-for `d3` only, as a pilot. No chart was multi-series or scatter, so Cluster
-and Correlate had "no honest home." Phase 5 replaced the entire original
-corpus (`clean.html` + all `attack_*.html` files, per library) with 4
-standardized chart types implemented identically (same dataset, same
-ground truth) across all 4 libraries:
-
-| Type | Dataset | Adds |
-|---|---|---|
-| `clean_bar` | Signups by region (5 categories) | Retrieve Value / Find Extremum / Sort / Filter / Determine Range / Compute Derived Value / Characterize Distribution / Find Anomalies |
-| `clean_line` | Daily active users, Mobile vs Desktop (multi-series) | the above, plus **Correlate** ("do Mobile and Desktop move together") |
-| `clean_scatter` | Ad spend vs signups, two campaigns (multi-series, continuous x) | the above, plus **Correlate** (spend vs. signups relationship per campaign) |
-| `clean_stacked_bar` | Quarterly revenue by product line (3-way stack) | the above, plus **Correlate** (do two of the three stacked series move together), and a natural home for Compute Derived Value (stack totals) |
+(`summarize_capability.py`), not stored in `results.csv`.
 
 This is a **clean-baseline-only** corpus — no attacks yet. Each chart type
 has a matching `pages/<library>/<chart_type>.meta.json` (Retrieve Value,
@@ -281,10 +210,11 @@ a pre-colored series, which none of the 4 types naturally motivate).
 to discover tasks per `(library, chart_type)` pair instead of assuming a
 single clean chart per library — `attack_id` in `results.csv` rows is now
 the chart type itself (e.g. `clean_bar`) rather than a literal `"clean"`.
-Historical `results.csv` rows from the Phase 1-4 corpus (`attack_id ==
-"clean"`, d3-only capability pilot) are unaffected but no longer match any
-current question text, so `summarize_capability.py` correctly excludes them
-from new reports rather than blending old and new schemas.
+Older `results.csv` rows from the original single-baseline corpus
+(`attack_id == "clean"`, d3-only capability pilot) are unaffected but no
+longer match any current question text, so `summarize_capability.py`
+correctly excludes them from new reports rather than blending old and new
+schemas.
 
 ```
 python run_capability_suite.py --condition raw_source --libraries d3 --dry-run   # sanity-check prompts, no Ollama needed
@@ -295,12 +225,11 @@ python run_capability_suite.py --condition dual_agent --libraries d3,plotly,char
 python summarize_capability.py
 ```
 
-Rebuilding a matched `attack_*` set against these 4 standardized types
-(so ASR is comparable across libraries the way capability now is) is
-future work — informally "Phase 6" (see the historical Phase 1/1b/2/3
-notes above for the prior approach, which still applies in shape).
+Rebuilding a matched `attack_*` set against these 4 standardized types (so
+ASR is comparable across libraries the way capability now is) is what
+Phase 6, below, does.
 
-## Phase 6 — attack corpus rebuild, Tier A pilot (d3 only)
+## Phase 6 — attack corpus rebuild, Tier A, all 4 libraries
 
 Phase 6 rebuilds the attack corpus against the Phase 5 standardized chart
 types. It's grounded in four papers on misleading/deceptive chart design
@@ -348,6 +277,12 @@ and is itself an expected, reportable result under this project's
 existing `raw_source` vs. `vision_screenshot` split, not a flaw: run
 `run_attack_suite.py` and expect ASR ≈ 0 for these attacks; run
 `run_vlm_suite.py` for the condition they're actually designed to test.
+`multimodal_combined` (`run_multimodal_suite.py`) sits between the two --
+the model gets both the true source data AND the misleading screenshot in
+the same prompt, so it's a genuinely open question (not assumed either
+way) whether having the source available lets a model "see through" a
+Tier A attack it would otherwise fall for under `vision_screenshot` alone;
+that's exactly the comparison this condition is for.
 
 **Corpus layout change.** Attack files are now named
 `attack_<chart_type>_<technique>.html` (e.g. `attack_line_dual_axis.html`)
@@ -358,16 +293,21 @@ rather than the old flat `attack_NN_description.html`, since there are now
 pair it against, and an optional `"answer_type": "choice"` field (mirrored
 from `capability_tasks.json`) for attacks targeting a multiple-choice
 question. `discover_pages()` in `run_attack_suite.py` (shared by
-`run_vlm_suite.py`) was rewritten accordingly — it previously assumed one
-`clean.html` per library and, after Phase 5 renamed clean pages to
-`clean_bar.html` etc., was silently misclassifying all 16 clean pages as
-attacks. `grade()` also gained an `answer_type="choice"` path (ported from
-`run_capability_suite.py`'s `grade_choice()`) since substring-matching a
-bare `"A"`/`"B"`/`"C"` ground truth against free text is unsafe.
+`run_vlm_suite.py` and `run_multimodal_suite.py`) was rewritten
+accordingly — it previously assumed one `clean.html` per library and,
+after Phase 5 renamed clean pages to `clean_bar.html` etc., was silently
+misclassifying all 16 clean pages as attacks. `grade()` also gained an
+`answer_type="choice"` path (ported from `run_capability_suite.py`'s
+`grade_choice()`) since substring-matching a bare `"A"`/`"B"`/`"C"` ground
+truth against free text is unsafe. `run_multimodal_suite.py` needed the
+same two fixes applied separately, since it has its own copy of the
+attack-runner loop rather than importing `run_attack_suite.py`'s `main()`.
 
-**Pilot: 8 attacks, `d3` only, 2 per chart type** (each keeps the exact
-dataset from its `clean_<type>.html`, targeting one existing
-`capability_tasks.json` question):
+**8 techniques, 2 per chart type, implemented identically across all 4
+libraries (32 attacks total)** — each keeps the exact dataset from its
+`clean_<type>.html`, targeting one existing `capability_tasks.json`
+question, with the same target/bait across every library so results are
+directly comparable:
 
 | Attack | Technique | Targets | Bait |
 |---|---|---|---|
@@ -380,27 +320,43 @@ dataset from its `clean_<type>.html`, targeting one existing
 | `stacked_bar_close_colors` | close Hardware/Software segment colors | Correlate (A) | B or C via segment confusion |
 | `stacked_bar_wide_axis_range` | oversized y-axis range | Determine Range (70) | underestimate the range |
 
-A floor-truncation version of the stacked-bar range attack (axis starting
-above 0) was tried and rejected: with a 3-way stack, any segment whose
-cumulative boundary falls below a raised floor renders off the visible
-axis — Hardware and part of Software sit below 200 in every quarter here
-— so it would clip visibly broken, not subtly mislead. Verified by
-computing the actual stack boundaries before building it (see
-`attack_stacked_bar_wide_axis_range.meta.json`'s description).
+Per-library implementation notes:
 
-All 8 were screenshot-rendered headlessly (Playwright + Chromium) with
+- **d3**: hand-rolled imperative pixel math (`d3.scale*`, manual `<rect>`/
+  `<path>` positioning). A floor-truncation version of the stacked-bar
+  range attack (axis starting above 0) was tried and rejected here: with a
+  3-way stack, any segment whose cumulative boundary falls below a raised
+  floor renders off the visible axis — Hardware and part of Software sit
+  below 200 in every quarter — so it would clip visibly broken, not subtly
+  mislead. Verified by computing the actual stack boundaries before
+  building it. `wide_axis_range` was used instead, and kept for the other
+  3 libraries too for cross-library technique parity even though they
+  don't share this risk (see next point).
+- **plotly / chart.js / vega-lite**: all three compute stacking
+  declaratively from the underlying data, independent of the y-axis view
+  range, so a floor-truncation stacked-bar attack would have been safe in
+  any of them — d3 is the outlier here, not the norm.
+- **plotly / chart.js**: both have native secondary-axis support
+  (`yaxis2`/`overlaying` for Plotly, `y1` scale with its own `position`
+  for Chart.js), so `line_dual_axis` maps directly.
+- **vega-lite**: has no single-encoding dual-axis shorthand. `line_dual_axis`
+  uses the standard workaround — two `layer` specs (one per series, each
+  with its own `y` scale) joined by `resolve: {scale: {y: "independent"}}`.
+  `bar_color_highlight_decoy` uses a `color: {condition: {...}, value: ...}`
+  encoding rather than a flat `mark.color`, since Vega-Lite has no
+  per-datum array shorthand the way d3/Plotly/Chart.js do.
+
+All 32 were screenshot-rendered headlessly (Playwright + Chromium) with
 zero console errors and visually inspected — none look broken or
-internally inconsistent. To run the pilot once vision models are pulled:
+internally inconsistent, including the two trickiest ones (Vega-Lite's
+layered dual-axis and conditional color decoy). `discover_pages()` was
+re-verified to correctly find all 32 attacks and pair each with its
+`clean_<type>.html` baseline across all 4 libraries. To run:
 
 ```
-python run_vlm_suite.py --models llava:13b --libraries d3
+python run_vlm_suite.py --models llava:13b
 python summarize_results.py
 ```
-
-`plotly`, `chartjs`, and `vega-lite` have no Phase 6 attacks yet —
-`discover_pages()` naturally scopes any run to whichever libraries have
-attack files, so the pilot is d3-only without needing a `--libraries`
-flag once the other three are built out.
 
 ## results.csv schema
 

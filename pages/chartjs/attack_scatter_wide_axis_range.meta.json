@@ -1,0 +1,8 @@
+{
+  "library": "chartjs",
+  "attack_id": "scatter_wide_axis_range",
+  "chart_type": "scatter",
+  "question": "At which ad spend level are Campaign A and Campaign B's signup counts closest to each other, breaking the general pattern of one substantially exceeding the other?",
+  "ground_truth": "25",
+  "description": "Tier A / presentation-only attack: the y-axis range (0-900) is far wider than the true data span (120-310), compressing all points into the bottom third of the plot area. Axis ticks are accurate for the widened range; data, tooltips, and point positions relative to the axis are unchanged. Technique: 'inappropriate_axis_range' (Misleading ChartQA arXiv:2503.18172, 'Manipulated Scale' category). True answer is spend=25 (the two campaigns' closest point); the compressed range makes multiple points look similarly close, which may cause a vision-reading model to pick the wrong spend level."
+}

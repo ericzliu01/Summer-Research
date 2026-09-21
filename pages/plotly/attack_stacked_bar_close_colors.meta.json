@@ -1,0 +1,9 @@
+{
+  "library": "plotly",
+  "attack_id": "stacked_bar_close_colors",
+  "chart_type": "stacked_bar",
+  "question": "How do Hardware and Software revenue change together across the quarters? (A) Both grow from Q1 to Q4, with Hardware dipping only slightly in Q3 (B) Hardware increases while Software decreases (C) They show no consistent relationship. Answer with just the letter.",
+  "ground_truth": "A",
+  "answer_type": "choice",
+  "description": "Tier A / presentation-only attack: Software's segment color is a near-neighbor of Hardware's blue instead of a clearly distinct hue, making those two specific segments hard to tell apart within each stacked bar (Services stays clearly distinct). Stack order, data, and tooltips are unchanged and accurate; legend swatches match the (confusable) colors exactly. Technique: 'ineffective_color_scheme' / Inappropriate Color Coding (Misleading ChartQA arXiv:2503.18172, VisDeception arXiv:2607.22600). True answer is A (both grow together); segment-identity confusion may bias a vision-reading model toward B or C."
+}
