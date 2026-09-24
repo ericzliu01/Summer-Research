@@ -3,7 +3,7 @@
 Tests whether local LLM/VLM agents get misled by adversarial data
 visualizations, across four charting libraries (D3.js, Plotly, Chart.js,
 Vega-Lite). Runs against local models served by
-[Ollama](https://ollama.com) (`http://localhost:11434`) — no paid APIs.
+[Ollama](https://ollama.com) (`http://localhost:11434`), no paid APIs currently.
 
 ## Setup
 
