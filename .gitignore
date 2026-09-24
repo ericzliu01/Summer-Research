@@ -4,3 +4,6 @@ __pycache__/
 # Persistent Playwright browser profiles for the browser-agent suite.
 # Contains real session cookies for personal Claude/Gemini logins -- never commit.
 browser_profiles/
+
+# Claude Code local settings (per-user overrides, not shared project config).
+.claude/settings.local.json
