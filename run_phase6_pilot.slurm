@@ -30,18 +30,24 @@ set -e
 #
 # multimodal_combined needs Playwright + a cached Chromium binary at
 # PLAYWRIGHT_BROWSERS_PATH (compute nodes typically lack outbound internet
-# to fetch it fresh) -- make sure `playwright install chromium` has been
-# run against that same path from a login node (or other internet-
-# connected machine) before submitting this job, or the multimodal_combined
-# step will fail to launch a browser.
+# to fetch it fresh). This uses the same PLAYWRIGHT_BROWSERS_PATH,
+# `module load`, and PATH as run_multimodal_suite.slurm (already in this
+# repo, pre-dating Phase 6) -- if that script has run successfully before,
+# Chromium is already cached here and the Python env already has
+# playwright/requests importable, so this should just work. If it's never
+# been run successfully, `playwright install chromium` needs to happen
+# against this same path from a login node (or other internet-connected
+# machine) before submitting this job.
 
 WORK_DIR=/users/5/liu02496/VisAgent/test
-export PATH="$HOME/ollama/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/ollama/bin:$PATH"
 export OLLAMA_MODELS=/scratch.global/$USER/ollama-models
 export PLAYWRIGHT_BROWSERS_PATH=/scratch.global/$USER/pw-browsers
 
 echo "=== SLURM job $SLURM_JOB_ID on $(hostname) at $(date) ==="
 nvidia-smi 2>/dev/null | grep -E "Tesla|Driver" | head -2 || echo "no nvidia-smi"
+
+module load python/3.10.9_anaconda2023.03_libmamba
 
 mkdir -p "$WORK_DIR/results"
 
